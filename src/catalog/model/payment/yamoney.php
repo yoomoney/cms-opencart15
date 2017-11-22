@@ -310,7 +310,11 @@ class ModelPaymentYaMoney extends Model
             $price = $this->currency->format($prod['price'], 'RUB', '', false);
             if (isset($productInfo['tax_class_id'])) {
                 $taxId = $productInfo['tax_class_id'];
-                $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates[$taxId]);
+                if (isset($taxRates[$taxId])) {
+                    $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates[$taxId]);
+                } else {
+                    $builder->addReceiptItem($prod['name'], $price, $prod['quantity']);
+                }
             } else {
                 $builder->addReceiptItem($prod['name'], $price, $prod['quantity']);
             }
@@ -322,7 +326,11 @@ class ModelPaymentYaMoney extends Model
                 $price = $this->currency->format($total['value'], 'RUB', '', false);
                 if (isset($total['tax_class_id'])) {
                     $taxId = $total['tax_class_id'];
-                    $builder->addReceiptShipping($total['title'], $price, $taxRates[$taxId]);
+                    if (isset($taxRates[$taxId])) {
+                        $builder->addReceiptShipping($total['title'], $price, $taxRates[$taxId]);
+                    } else {
+                        $builder->addReceiptShipping($total['title'], $price);
+                    }
                 } else {
                     $builder->addReceiptShipping($total['title'], $price);
                 }

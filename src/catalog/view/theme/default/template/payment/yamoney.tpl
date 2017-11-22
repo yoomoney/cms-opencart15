@@ -13,7 +13,7 @@ endif; ?>
             </a>
             <?php else : ?>
             <div class="right">
-                <a href="javascript://" id="button-confirm" name="submit-button" class="button"><?php echo $button_confirm; ?></a>
+                <button id="button-confirm" type="button" class="button"><?php echo $button_confirm; ?></button>
             </div>
             <?php endif; ?>
         </div>
@@ -24,22 +24,20 @@ jQuery(document).ready(function () {
 
 <?php if ($paymentMethod->isModeMoney()): ?>
 
-    $('#button-confirm').bind('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $.ajax({
+    jQuery('#button-confirm').bind('click', function(e) {
+        jQuery.ajax({
             type: 'get',
             url: 'index.php?route=payment/yamoney/confirm'
         });
-        $("#YamoneyForm").submit();
+        jQuery("#YamoneyForm").submit();
     });
-    $('input[name=paymentType]').bind('click', function() {
-        if ($('input[name=paymentType]:checked').val()=='MP'){
+    jQuery('input[name=paymentType]').bind('click', function() {
+        if (jQuery('input[name=paymentType]:checked').val()=='MP'){
             var textMpos='<?php echo $mpos_page_url; ?>';
-            $("#YamoneyForm").attr('action', textMpos.replace(/&amp;/g, '&'));
+            jQuery("#YamoneyForm").attr('action', textMpos.replace(/&amp;/g, '&'));
 
-        }else{
-            $("#YamoneyForm").attr('action', '<?php echo $paymentMethod->getFormUrl(); ?>');
+        } else {
+            jQuery("#YamoneyForm").attr('action', '<?php echo $paymentMethod->getFormUrl(); ?>');
         }
     });
 
