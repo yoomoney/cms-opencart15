@@ -65,12 +65,18 @@ jQuery(document).ready(function () {
 
     jQuery('#button-confirm').bind('click', function () {
         var form = jQuery("#YamoneyForm")[0];
+        var checked;
+        if (form.paymentType.hasOwnProperty('value')) {
+            checked = form.paymentType.value;
+        } else {
+            checked = getCheckedValue(form.paymentType);
+        }
         jQuery.ajax({
             url: "<?php echo $validate_url; ?>",
             dataType: "json",
             method: "GET",
             data: {
-                paymentType: form.paymentType.value,
+                paymentType: checked,
                 qiwiPhone: jQuery('input[name=qiwiPhone]').val(),
                 alphaLogin: jQuery('input[name=alphaLogin]').val()
             },
@@ -101,6 +107,15 @@ jQuery(document).ready(function () {
             jQuery('#YamoneyForm').prepend(content);
             jQuery('#YamoneyForm .warning').fadeIn(300);
         }
+    }
+
+    function getCheckedValue(radioCollection) {
+        for (var i = 0; i < radioCollection.length; ++i) {
+            if (radioCollection[i].checked) {
+                return radioCollection[i].value;
+            }
+        }
+        return null;
     }
 
 <?php endif; ?>
