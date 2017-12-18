@@ -239,6 +239,25 @@
                         <p class="help-block"><a href="<?php echo $kassa_logs_link; ?>"><?php echo $lang->get('kassa_view_logs'); ?></a></p>
                     </div>
                 </div>
+                <div class="form-group">
+                    <div class="col-sm-3 control-label"><strong><?php echo $lang->get('kassa_before_redirect_label'); ?></strong></div>
+                    <div class="col-sm-8">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="ya_kassa_create_order_before_redirect" id="ya_kassa_create_order_before_redirect"
+                                       value="1" <?php echo ($kassa->getCreateOrderBeforeRedirect() ? 'checked' : ''); ?> />
+                                <?php echo $lang->get('kassa_create_order_label'); ?>
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="ya_kassa_clear_cart_before_redirect" id="ya_kassa_clear_cart_before_redirect"
+                                       value="1" <?php echo ($kassa->getClearCartBeforeRedirect() ? 'checked' : ''); ?> />
+                                <?php echo $lang->get('kassa_clear_cart_label'); ?>
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group" id="ya-new-status">
                     <label class="control-label col-sm-3" for="ya_kassa_new_order_status"><?php echo $lang->get('kassa_order_status_label'); ?></label>
                     <div class="col-sm-8">

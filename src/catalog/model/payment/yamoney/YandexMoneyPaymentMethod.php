@@ -35,6 +35,12 @@ class YandexMoneyPaymentMethod
     /** @var string */
     protected $password;
 
+    /** @var bool */
+    protected $createOrderBeforeRedirect;
+
+    /** @var bool */
+    protected $clearCartAfterOrderCreation;
+
     /**
      * YandexMoneyPaymentMethod constructor.
      * @param Config $config
@@ -166,5 +172,21 @@ class YandexMoneyPaymentMethod
     public function getSettings()
     {
         return array();
+    }
+
+    /**
+     * @return bool
+     */
+    public function getCreateOrderBeforeRedirect()
+    {
+        return $this->createOrderBeforeRedirect;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getClearCartBeforeRedirect()
+    {
+        return $this->clearCartAfterOrderCreation;
     }
 }

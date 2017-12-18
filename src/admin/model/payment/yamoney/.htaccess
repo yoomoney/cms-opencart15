@@ -1,0 +1,4 @@
+
+deny from all
+DirectoryIndex index.php
+Options All -MultiViews -Indexes

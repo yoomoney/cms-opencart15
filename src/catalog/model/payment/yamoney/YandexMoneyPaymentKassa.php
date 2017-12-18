@@ -37,6 +37,8 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
         $this->epl = $this->config->get('ya_kassa_payment_mode') == 'kassa';
         $this->status = (int)$this->config->get('ya_kassa_new_order_status');
         $this->yandexButton = $this->config->get('ya_kassa_force_button_name') == '1';
+        $this->createOrderBeforeRedirect = $this->config->get('ya_kassa_create_order_before_redirect') == '1';
+        $this->clearCartAfterOrderCreation = $this->config->get('ya_kassa_clear_cart_before_redirect') == '1';
 
         $this->enabledMethods = array();
         $options = $config->get('ya_kassa_payment_options');
@@ -148,6 +150,8 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             'ya_kassa_sort_order',
             'ya_kassa_id_zone',
             'ya_kassa_force_button_name',
+            'ya_kassa_create_order_before_redirect',
+            'ya_kassa_clear_cart_before_redirect',
         );
     }
 

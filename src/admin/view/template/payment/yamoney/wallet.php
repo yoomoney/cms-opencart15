@@ -93,6 +93,25 @@
                         <p class="help-block"><?php echo $lang->get('wallet_debug_description'); ?></p>
                     </div>
                 </div>
+                <div class="form-group">
+                    <div class="col-sm-3 control-label"><strong><?php echo $lang->get('wallet_before_redirect_label'); ?></strong></div>
+                    <div class="col-sm-8">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="ya_money_create_order_before_redirect" id="ya_money_create_order_before_redirect"
+                                       value="1" <?php echo ($ya_money_create_order_before_redirect == '1' ? 'checked' : ''); ?> />
+                                <?php echo $lang->get('wallet_create_order_label'); ?>
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="ya_money_clear_cart_before_redirect" id="ya_money_clear_cart_before_redirect"
+                                       value="1" <?php echo ($ya_money_clear_cart_before_redirect == '1' ? 'checked' : ''); ?> />
+                                <?php echo $lang->get('wallet_clear_cart_label'); ?>
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group" id="ya-new-status">
                     <label class="control-label col-sm-3" for="ya_money_sort_order"><?php echo $lang->get('wallet_order_status_label'); ?></label>
                     <div class="col-sm-8">

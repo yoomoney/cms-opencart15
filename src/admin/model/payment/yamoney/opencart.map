@@ -1,0 +1,12 @@
+b:src
+f:admin/controller/payment/yamoney.php
+f:{admin,catalog}/language/{english,russian}/payment/yamoney.php
+d:{admin,catalog}/model/payment/yamoney
+f:admin/model/payment/ya_money.php
+f:admin/view/image/payment/{q,yamoney}.png
+d:admin/view/template/payment/yamoney
+f:admin/view/template/payment/yamoney.tpl
+f:catalog/{controller,model}/payment/yamoney.php
+f:catalog/view/theme/default/template/payment/yamoney.tpl
+d:catalog/view/theme/default/template/payment/yamoney
+d:image/yamoney

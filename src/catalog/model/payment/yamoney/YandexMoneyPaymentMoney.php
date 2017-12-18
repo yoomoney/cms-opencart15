@@ -8,6 +8,8 @@ class YandexMoneyPaymentMoney extends YandexMoneyPaymentMethod
 
         $this->mode = self::MODE_MONEY;
         $this->password = $config->get('ya_money_password');
+        $this->createOrderBeforeRedirect = $this->config->get('ya_money_create_order_before_redirect') == '1';
+        $this->clearCartAfterOrderCreation = $this->config->get('ya_money_clear_cart_before_redirect') == '1';
     }
 
     public function getFormUrl()
@@ -69,6 +71,8 @@ class YandexMoneyPaymentMoney extends YandexMoneyPaymentMethod
             'ya_money_debug_mode',
             'ya_money_sort_order',
             'ya_money_id_zone',
+            'ya_money_create_order_before_redirect',
+            'ya_money_clear_cart_before_redirect',
         );
     }
 

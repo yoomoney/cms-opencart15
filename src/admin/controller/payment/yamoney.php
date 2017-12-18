@@ -21,7 +21,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.0.3';
+    private $moduleVersion = '1.0.4';
 
     /**
      * @var ModelPaymentYaMoney
@@ -86,6 +86,15 @@ class ControllerPaymentYaMoney extends Controller
         $this->data['tax_classes'] = $this->getValidTaxRateList();
         $this->data['pages_mpos'] = $this->getCatalogPages();
 
+        $this->data['zip_enabled'] = function_exists('zip_open');
+        $this->data['curl_enabled'] = function_exists('curl_init');
+        if ($this->data['zip_enabled'] && $this->data['curl_enabled']) {
+            $this->applyVersionInfo();
+            $this->applyBackups();
+            $this->data['update_action'] = $this->url->link('payment/yamoney/checkVersion', 'token=' . $this->session->data['token'], true);
+            $this->data['backup_action'] = $this->url->link('payment/yamoney/backups', 'token=' . $this->session->data['token'], true);
+        }
+
         $post = $this->request->post;
         foreach ($this->getModel()->getPaymentMethods() as $method) {
             foreach ($method->getSettings() as $param) {
@@ -104,6 +113,8 @@ class ControllerPaymentYaMoney extends Controller
         $this->data['wallet'] = $this->getModel()->getPaymentMethod(YandexMoneyPaymentMethod::MODE_MONEY);
         $this->data['billing'] = $this->getModel()->getPaymentMethod(YandexMoneyPaymentMethod::MODE_BILLING);
 
+        $this->data['breadcrumbs'] = array();
+
         $this->document->setTitle($this->language->get('heading_title'));
         $this->template = 'payment/yamoney.tpl';
         $this->children = array(
@@ -116,6 +127,7 @@ class ControllerPaymentYaMoney extends Controller
 
     public function logs()
     {
+        $this->language->load('payment/yamoney');
         $fileName = DIR_LOGS . '/yandex-money.log';
 
         if (isset($_POST['clear-logs']) && $_POST['clear-logs'] === '1') {
@@ -148,12 +160,128 @@ class ControllerPaymentYaMoney extends Controller
         if (file_exists($fileName)) {
             $logs = file_get_contents($fileName);
         }
+        $this->data['lang'] = $this->language;
         $this->data['logs'] = $logs;
+        $this->data['breadcrumbs'] = array(
+            array(
+                'name' => 'Журнал сообщений',
+                'link' => $this->url->link('payment/yamoney/logs', 'token=' . $this->session->data['token'], true),
+            ),
+        );
 
         $this->template = 'payment/yamoney/logs.tpl';
         $this->children = array(
             'common/header',
             'common/footer'
+        );
+        $this->response->setOutput($this->render());
+    }
+
+    public function backups()
+    {
+        $link = $this->url->link('payment/yamoney', 'token=' . $this->session->data['token'], 'SSL');
+
+        if (!empty($this->request->post['action'])) {
+            $logs = $this->url->link('payment/yamoney/logs', 'token=' . $this->session->data['token'], 'SSL');
+            switch ($this->request->post['action']) {
+                case 'restore';
+                    if (!empty($this->request->post['file_name'])) {
+                        if ($this->getModel()->restoreBackup($this->request->post['file_name'])) {
+                            $this->session->data['flash_message'] = 'Версия модуля ' . $this->request->post['version'] . ' была успешно восстановлена из резервной копии ' . $this->request->post['file_name'];
+                            $this->redirect($link);
+                        }
+                        $this->data['errors'][] = 'Не удалось восстановить данные из резервной копии, подробную информацию о произошедшей ошибке можно найти в <a href="' . $logs . '">логах модуля</a>';
+                    }
+                    break;
+                case 'remove':
+                    if (!empty($this->request->post['file_name'])) {
+                        if ($this->getModel()->removeBackup($this->request->post['file_name'])) {
+                            $this->session->data['flash_message'] = 'Резервная копия ' . $this->request->post['file_name'] . ' был успешно удалён';
+                            $this->redirect($link);
+                        }
+                        $this->data['errors'][] = 'Не удалось удалить резервную копию ' . $this->request->post['file_name'] . ', подробную информацию о произошедшей ошибке можно найти в <a href="' . $logs . '">логах модуля</a>';
+                    }
+                    break;
+            }
+        }
+
+        $this->applyBackups();
+
+        $this->template = 'payment/yamoney/backups.tpl';
+        $this->children = array(
+            'common/header',
+            'common/footer'
+        );
+        $this->response->setOutput($this->render());
+    }
+
+    public function checkVersion()
+    {
+        $link = $this->url->link('payment/yamoney', 'token=' . $this->session->data['token'], 'SSL');
+
+        if (isset($this->request->post['force'])) {
+            $this->applyVersionInfo(true);
+            $this->redirect($link);
+        }
+
+        $versionInfo = $this->applyVersionInfo();
+
+        if (isset($this->request->post['update']) && $this->request->post['update'] == '1') {
+            $fileName = $this->getModel()->downloadLastVersion($versionInfo['tag']);
+            $logs = $this->url->link('payment/yamoney/logs', 'token=' . $this->session->data['token'], 'SSL');
+            if (!empty($fileName)) {
+                if ($this->getModel()->createBackup($this->moduleVersion)) {
+                    if ($this->getModel()->unpackLastVersion($fileName)) {
+                        $this->session->data['flash_message'] = 'Версия модуля ' . $this->request->post['version'] . ' была успешно загружена и установлена';
+                        $this->redirect($link);
+                    } else {
+                        $this->data['errors'][] = 'Не удалось распаковать загруженный архив ' . $fileName . '. Подробная информация об ошибке — в <a href="' . $logs . '">логах модуля</a>';
+                    }
+                } else {
+                    $this->data['errors'][] = 'Не удалось создать резервную копию установленной версии модуля. Подробная информация об ошибке — в <a href="' . $logs . '">логах модуля</a>';
+                }
+            } else {
+                $this->data['errors'][] = 'Не удалось загрузить архив, попробуйте еще раз. Подробная информация об ошибке — в <a href="' . $logs . '">логах модуля</a>';
+            }
+        }
+
+        $this->template = 'payment/yamoney/check_module_version.tpl';
+        $this->children = array(
+            'common/header',
+            'common/footer'
+        );
+    }
+
+    public function payments()
+    {
+        $this->language->load('payment/yamoney');
+
+        $this->getModel()->init($this->config);
+        $kassa = $this->getModel()->getPaymentMethod(YandexMoneyPaymentMethod::MODE_KASSA);
+        if (!$kassa->isEnabled()) {
+            $url = $this->url->link('payment/yamoney', 'token=' . $this->session->data['token'], true);
+            $this->redirect($url);
+        }
+        $payments = $this->getModel()->getPayments();
+
+        if (isset($this->request->get['update_statuses'])) {
+            $this->getModel()->updatePaymentsStatuses($payments);
+        }
+
+        $this->document->setTitle('Список платежей');
+        $this->template = 'payment/yamoney/kassa_payments_list.tpl';
+        $this->children = array(
+            'common/header',
+            'common/footer',
+        );
+
+        $this->data['lang'] = $this->language;
+        $this->data['payments'] = $payments;
+        $this->data['breadcrumbs'] = array(
+            array(
+                'name' => 'Платежи',
+                'link' => $this->url->link('payment/yamoney/payments', 'token=' . $this->session->data['token'], true),
+            ),
         );
         $this->response->setOutput($this->render());
     }
@@ -358,5 +486,33 @@ class ControllerPaymentYaMoney extends Controller
         } else {
             return false;
         }
+    }
+
+    private function applyVersionInfo($force = false)
+    {
+        $versionInfo = $this->getModel()->checkModuleVersion($force);
+        if (version_compare($versionInfo['version'], $this->moduleVersion) > 0) {
+            $this->data['new_version_available'] = true;
+            $this->data['changelog'] = $this->getModel()->getChangeLog($this->moduleVersion, $versionInfo['version']);
+            $this->data['newVersion'] = $versionInfo['version'];
+        } else {
+            $this->data['new_version_available'] = false;
+            $this->data['changelog'] = '';
+            $this->data['newVersion'] = $this->moduleVersion;
+        }
+        $this->data['currentVersion'] = $this->moduleVersion;
+        $this->data['newVersionInfo'] = $versionInfo;
+
+        return $versionInfo;
+    }
+
+    private function applyBackups()
+    {
+        if (!empty($this->session->data['flash_message'])) {
+            $this->data['success'] = $this->session->data['flash_message'];
+            unset($this->session->data['flash_message']);
+        }
+
+        $this->data['backups'] = $this->getModel()->getBackupList();
     }
 }

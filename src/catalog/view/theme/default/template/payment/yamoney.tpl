@@ -13,7 +13,7 @@ endif; ?>
             </a>
             <?php else : ?>
             <div class="right">
-                <button id="button-confirm" type="button" class="button"><?php echo $button_confirm; ?></button>
+                <input id="button-confirm" type="button" class="button" value="<?php echo $button_confirm; ?>" />
             </div>
             <?php endif; ?>
         </div>
@@ -66,7 +66,7 @@ jQuery(document).ready(function () {
     jQuery('#button-confirm').bind('click', function () {
         var form = jQuery("#YamoneyForm")[0];
         var checked;
-        if (form.paymentType.hasOwnProperty('value')) {
+        if (form.paymentType.value !== undefined) {
             checked = form.paymentType.value;
         } else {
             checked = getCheckedValue(form.paymentType);

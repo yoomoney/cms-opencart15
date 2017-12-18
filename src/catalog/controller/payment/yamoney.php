@@ -56,7 +56,7 @@ class ControllerPaymentYaMoney extends Controller
             if (empty($paymentType)) {
                 $this->jsonError('Не указан способ оплаты');
             } elseif (!$paymentMethod->isPaymentMethodEnabled($paymentType)) {
-                $this->jsonError('Указанный неверный способ оплаты');
+                $this->jsonError('Указан неверный способ оплаты');
             } elseif ($paymentType === \YaMoney\Model\PaymentMethodType::QIWI) {
                 $phone = isset($_GET['qiwiPhone']) ? preg_replace('/[^\d]/', '', $_GET['qiwiPhone']) : '';
                 if (empty($phone)) {
@@ -84,6 +84,13 @@ class ControllerPaymentYaMoney extends Controller
         } elseif ($confirmation->getType() === \YaMoney\Model\ConfirmationType::REDIRECT) {
             $result['redirect'] = $confirmation->getConfirmationUrl();
         }
+        if ($paymentMethod->getCreateOrderBeforeRedirect()) {
+            $this->getModel()->confirmOrder($paymentMethod, $orderInfo['order_id']);
+        }
+        if ($paymentMethod->getClearCartBeforeRedirect()) {
+            $this->cart->clear();
+        }
+
         echo json_encode($result);
         exit();
     }
@@ -96,49 +103,75 @@ class ControllerPaymentYaMoney extends Controller
      */
     public function confirm()
     {
-        if (!isset($_GET['order_id'])) {
-            $this->errorRedirect('Order id not specified in return link');
-        }
-        $this->getModel()->log('info', 'Подтверждение платежа (возврат из кассы) для заказа №' . $orderId);
-        $this->language->load('payment/yamoney');
-        $orderId = (int)$_GET['order_id'];
-        if ($orderId <= 0) {
-            $this->errorRedirect('Invalid order id in return link: ' . json_encode($_GET['order_id']));
-        }
-        /** @var YandexMoneyPaymentKassa $paymentMethod */
         $paymentMethod = $this->getModel()->getPaymentMethod($this->config->get('ya_mode'));
-        $payment = $this->getModel()->getOrderPayment($paymentMethod, $orderId);
-        if ($payment === null) {
-            $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
-        } elseif ($payment->getStatus() === \YaMoney\Model\PaymentStatus::CANCELED) {
-            $pageId = $this->config->get('ya_kassa_page_failure');
+        if ($paymentMethod instanceof YandexMoneyPaymentKassa) {
+            if (!isset($_GET['order_id'])) {
+                $this->errorRedirect('Order id not specified in return link');
+            }
+            $this->getModel()->log('info', 'Подтверждение платежа (возврат из кассы) для заказа №' . $orderId);
+            $this->language->load('payment/yamoney');
+            $orderId = (int)$_GET['order_id'];
+            if ($orderId <= 0) {
+                $this->errorRedirect('Invalid order id in return link: ' . json_encode($_GET['order_id']));
+            }
+
+            $payment = $this->getModel()->getOrderPayment($paymentMethod, $orderId);
+            if ($payment === null) {
+                $this->redirect($this->url->link('checkout/checkout', '', true));
+            } elseif ($payment->getStatus() === \YaMoney\Model\PaymentStatus::CANCELED) {
+                $pageId = $this->config->get('ya_kassa_page_failure');
+                if (empty($pageId) || $pageId < 0) {
+                    $redirectUrl = $this->url->link('checkout/checkout', '', true);
+                } else {
+                    $redirectUrl = $this->url->link('information/information', 'information_id=' . $pageId, 'SSL');
+                }
+                $this->redirect($redirectUrl);
+            } elseif (!$payment->getPaid()) {
+                $this->redirect($this->url->link('checkout/checkout', '', true));
+            }
+
+            $this->load->model('checkout/order');
+            $orderInfo = $this->model_checkout_order->getOrder($orderId);
+            if ($orderInfo['order_status_id'] <= 0) {
+                $this->getModel()->confirmOrder($paymentMethod, $orderId);
+            }
+            if ($payment->getStatus() === \YaMoney\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
+                if ($this->getModel()->capturePayment($paymentMethod, $payment, false)) {
+                    $this->getModel()->confirmOrderPayment($orderId, $payment, $paymentMethod->getOrderStatusId());
+                    $this->getModel()->log('info', 'Платёж для заказа №' . $orderId . ' подтверждён');
+                }
+            }
+
+            $pageId = $this->config->get('ya_kassa_page_success');
+
+            if (isset($this->session->data['order_id']) && $orderId === $this->session->data['order_id']) {
+                $this->cart->clear();
+            }
             if (empty($pageId) || $pageId < 0) {
-                $redirectUrl = $this->url->link('checkout/checkout', '', 'SSL');
+                $redirectUrl = $this->url->link('checkout/success', 'order_id=' . $orderId, 'SSL');
             } else {
                 $redirectUrl = $this->url->link('information/information', 'information_id=' . $pageId, 'SSL');
             }
             $this->redirect($redirectUrl);
-        } elseif (!$payment->getPaid()) {
-            $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
-        }
-        $this->getModel()->confirmOrder($paymentMethod, $orderId);
-        if ($payment->getStatus() === \YaMoney\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
-            if ($this->getModel()->capturePayment($paymentMethod, $payment, false)) {
-                $this->getModel()->confirmOrderPayment($orderId, $payment, $paymentMethod->getOrderStatusId());
-                $this->getModel()->log('info', 'Платёж для заказа №' . $orderId . ' подтверждён');
-            }
-        }
 
-        $pageId = $this->config->get('ya_kassa_page_success');
-        if (empty($pageId) || $pageId < 0) {
-            $redirectUrl = $this->url->link('checkout/success', 'order_id=' . $orderId, 'SSL');
-        } else {
-            if (isset($this->session->data['order_id']) && $orderId === $this->session->data['order_id']) {
-                $this->cart->clear();
+        } elseif ($paymentMethod instanceof YandexMoneyPaymentMoney) {
+            $this->getModel()->log('debug', 'Wallet payment');
+            if (isset($this->session->data['order_id'])) {
+                if ($paymentMethod->getCreateOrderBeforeRedirect()) {
+                    $orderId = $this->session->data['order_id'];
+                    $this->load->model('checkout/order');
+                    $orderInfo = $this->model_checkout_order->getOrder($orderId);
+                    if ($orderInfo['order_status_id'] <= 0) {
+                        $this->getModel()->log('debug', 'Wallet create payment');
+                        $this->getModel()->confirmOrder($paymentMethod, $orderId);
+                    }
+                }
+                if ($paymentMethod->getClearCartBeforeRedirect()) {
+                    $this->getModel()->log('debug', 'Wallet clear cart');
+                    $this->cart->clear();
+                }
             }
-            $redirectUrl = $this->url->link('information/information', 'information_id=' . $pageId, 'SSL');
         }
-        $this->redirect($redirectUrl);
     }
 
     /**

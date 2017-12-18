@@ -20,6 +20,8 @@ class YandexMoneyPaymentBilling extends YandexMoneyPaymentMethod
         $this->formId = $config->get('ya_billing_form_id');
         $this->purpose = $config->get('ya_billing_purpose');
         $this->status = $config->get('ya_billing_status');
+
+        $this->createOrderBeforeRedirect = true;
     }
 
     public function getFormUrl()
