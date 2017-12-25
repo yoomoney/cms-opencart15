@@ -189,4 +189,8 @@ class YandexMoneyPaymentMethod
     {
         return $this->clearCartAfterOrderCreation;
     }
+    public function checkConnection(array $options = null, $logger = null)
+    {
+        return true;
+    }
 }

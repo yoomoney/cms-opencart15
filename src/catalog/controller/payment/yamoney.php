@@ -46,6 +46,12 @@ class ControllerPaymentYaMoney extends Controller
         /** @var YandexMoneyPaymentKassa $paymentMethod */
         $paymentMethod = $this->getModel()->getPaymentMethod($this->config->get('ya_mode'));
         if (!$paymentMethod->isModeKassa()) {
+            if ($paymentMethod->isModeBilling()) {
+                $narrative = $this->parsePlaceholders($this->config->get('ya_billing_purpose'), $orderInfo);
+                $this->updateOrderStatus($orderInfo['order_id'], $this->config->get('ya_billing_status'), $narrative);
+                echo json_encode(array('success' => true));
+                exit();
+            }
             $this->jsonError('Ошибка настройки модуля');
         }
         if (!isset($_GET['paymentType'])) {
@@ -108,13 +114,14 @@ class ControllerPaymentYaMoney extends Controller
             if (!isset($_GET['order_id'])) {
                 $this->errorRedirect('Order id not specified in return link');
             }
-            $this->getModel()->log('info', 'Подтверждение платежа (возврат из кассы) для заказа №' . $orderId);
+
             $this->language->load('payment/yamoney');
             $orderId = (int)$_GET['order_id'];
             if ($orderId <= 0) {
                 $this->errorRedirect('Invalid order id in return link: ' . json_encode($_GET['order_id']));
             }
 
+            $this->getModel()->log('info', 'Подтверждение платежа (возврат из кассы) для заказа №' . $orderId);
             $payment = $this->getModel()->getOrderPayment($paymentMethod, $orderId);
             if ($payment === null) {
                 $this->redirect($this->url->link('checkout/checkout', '', true));
@@ -319,11 +326,10 @@ class ControllerPaymentYaMoney extends Controller
                 $fio[] = $orderInfo['firstname'];
             }
             $narrative = $this->parsePlaceholders($this->config->get('ya_billing_purpose'), $orderInfo);
-            $this->data['formId'] = $this->config->get('ya_billing_id');
+            $this->data['formId'] = $this->config->get('ya_billing_form_id');
             $this->data['narrative'] = $narrative;
             $this->data['fio'] = implode(' ', $fio);
-
-            $this->updateOrderStatus($orderInfo['order_id'], $this->config->get('ya_billing_status'), $narrative);
+            $this->data['validate_url'] = $this->url->link('payment/yamoney/create', '', 'SSL');
         }
 
         if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/yamoney.tpl')) {

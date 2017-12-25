@@ -21,7 +21,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.0.4';
+    private $moduleVersion = '1.0.5';
 
     /**
      * @var ModelPaymentYaMoney
@@ -328,6 +328,11 @@ class ControllerPaymentYaMoney extends Controller
                 $prefix = substr($data['ya_kassa_password'], 0, 5);
                 if ($prefix !== 'test_' && $prefix !== 'live_') {
                     $this->error[] = $this->language->get('error_invalid_shop_password');
+                }
+            }
+            if (empty($this->error)) {
+                if (!$method->checkConnection($data, $this->getModel())) {
+                    $this->error[] = $this->language->get('error_invalid_shop_id_or_password');
                 }
             }
         } elseif ($method->isModeMoney()) {

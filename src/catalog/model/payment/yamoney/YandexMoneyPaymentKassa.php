@@ -234,4 +234,31 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
     {
         return $this->getEPL() && $this->yandexButton;
     }
+
+    public function checkConnection(array $options = null, $logger = null)
+    {
+        if (!empty($options)) {
+            $shopId = $options['ya_kassa_shop_id'];
+            $password = $options['ya_kassa_password'];
+        } else {
+            $shopId = $this->shopId;
+            $password = $this->password;
+        }
+
+        $client = new \YaMoney\Client\YandexMoneyApi();
+        $client->setAuth($shopId, $password);
+        if (!empty($logger)) {
+            $client->setLogger($logger);
+        }
+
+        try {
+            $payment = $client->getPaymentInfo('00000000-0000-0000-0000-000000000001');
+        } catch (\YaMoney\Common\Exceptions\NotFoundException $e) {
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return true;
+    }
 }

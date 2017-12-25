@@ -243,6 +243,9 @@ class YandexMoneyApi
      * Получить информацию о платеже
      * @param $paymentId
      * @return PaymentResponse
+     *
+     * @throws NotFoundException
+     * @throws ApiException
      */
     public function getPaymentInfo($paymentId)
     {
