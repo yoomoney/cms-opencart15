@@ -240,6 +240,12 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="col-sm-3 control-label">Список платежей через модуль Кассы</label>
+                    <div class="col-sm-9">
+                        <p class="help-block"><a href="<?php echo $kassa_payments_link; ?>">Открыть список</a></p>
+                    </div>
+                </div>
+                <div class="form-group">
                     <div class="col-sm-3 control-label"><strong><?php echo $lang->get('kassa_before_redirect_label'); ?></strong></div>
                     <div class="col-sm-8">
                         <div class="checkbox">

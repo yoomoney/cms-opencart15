@@ -21,7 +21,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.0.5';
+    private $moduleVersion = '1.0.6';
 
     /**
      * @var ModelPaymentYaMoney
@@ -80,6 +80,7 @@ class ControllerPaymentYaMoney extends Controller
         $this->data['action'] = $currentAction;
         $this->data['cancel'] = $this->url->link('extension/payment', 'token=' . $this->session->data['token'], 'SSL');
         $this->data['kassa_logs_link'] = $this->url->link('payment/yamoney/logs', 'token=' . $this->session->data['token'], 'SSL');
+        $this->data['kassa_payments_link'] = $this->url->link('payment/yamoney/payments', 'token=' . $this->session->data['token'], 'SSL');
 
         $this->data['orderStatusList'] = $this->getValidOrderStatusList();
         $this->data['geoZoneList'] = $this->getValidGeoZoneList();
@@ -257,15 +258,58 @@ class ControllerPaymentYaMoney extends Controller
         $this->language->load('payment/yamoney');
 
         $this->getModel()->init($this->config);
+        $this->getModel()->getPaymentMethods();
+        /** @var YandexMoneyPaymentKassa $kassa */
         $kassa = $this->getModel()->getPaymentMethod(YandexMoneyPaymentMethod::MODE_KASSA);
         if (!$kassa->isEnabled()) {
             $url = $this->url->link('payment/yamoney', 'token=' . $this->session->data['token'], true);
             $this->redirect($url);
         }
-        $payments = $this->getModel()->getPayments();
+        if (isset($this->request->get['page'])) {
+            $page = $this->request->get['page'];
+        } else {
+            $page = 1;
+        }
+        $limit = 20;
+        $payments = $this->getModel()->getPayments(($page - 1) * $limit, $limit);
 
         if (isset($this->request->get['update_statuses'])) {
-            $this->getModel()->updatePaymentsStatuses($payments);
+
+            $orderIds = array();
+            foreach ($payments as $row) {
+                $orderIds[$row['payment_id']] = $row['order_id'];
+            }
+
+            /** @var ModelSaleOrder $orderModel */
+            $this->load->model('sale/order');
+            $orderModel = $this->model_sale_order;
+
+            $paymentObjects = $this->getModel()->updatePaymentsStatuses($kassa, $payments);
+            if ($this->request->get['update_statuses'] == 2) {
+                foreach ($paymentObjects as $payment) {
+                    $this->getModel()->log('info', 'Check payment#' . $payment['payment_id']);
+                    if ($payment['status'] === \YaMoney\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
+                        $this->getModel()->log('info', 'Capture payment#' . $payment['payment_id']);
+                        if ($this->getModel()->capturePayment($kassa, $payment, false)) {
+                            $orderId = $orderIds[$payment->getId()];
+                            $orderInfo = $orderModel->getOrder($orderId);
+                            if (empty($orderInfo)) {
+                                $this->getModel()->log('warning', 'Empty order#' . $orderId . ' in notification');
+                                continue;
+                            } elseif ($orderInfo['order_status_id'] <= 0) {
+                                $link = $this->url->link('payment/yamoney/repay', 'order_id=' . $orderId, true);
+                                $anchor = '<a href="' . $link . '" class="button">Оплатить</a>';
+                                $orderInfo['order_status_id'] = 1;
+                                $orderModel->updateOrderStatus($orderId, $orderInfo, $anchor);
+                            }
+                            $this->getModel()->confirmOrderPayment($orderId, $orderInfo, $payment, $kassa->getOrderStatusId());
+                            $this->getModel()->log('info', 'Платёж для заказа №' . $orderId . ' подтверждён');
+                        }
+                    }
+                }
+            }
+            $link = $this->url->link('payment/yamoney/payments', 'token=' . $this->session->data['token'], 'SSL');
+            $this->redirect($link);
         }
 
         $this->document->setTitle('Список платежей');
@@ -275,13 +319,35 @@ class ControllerPaymentYaMoney extends Controller
             'common/footer',
         );
 
+        $pagination = new Pagination();
+        $pagination->total = $this->getModel()->countPayments();
+        $pagination->page = $page;
+        $pagination->limit = $limit;
+        $pagination->url = $this->url->link(
+            'payment/yamoney/payments',
+            'token=' . $this->session->data['token'] . '&page={page}',
+            true
+        );
+
+        $this->data['pagination'] = $pagination->render();
+
         $this->data['lang'] = $this->language;
         $this->data['payments'] = $payments;
         $this->data['breadcrumbs'] = array(
             array(
-                'name' => 'Платежи',
+                'name' => 'Список платежей через модуль Кассы',
                 'link' => $this->url->link('payment/yamoney/payments', 'token=' . $this->session->data['token'], true),
             ),
+        );
+        $this->data['update_link'] = $this->url->link(
+            'payment/yamoney/payments',
+            'token=' . $this->session->data['token'] . '&update_statuses=1',
+            'SSL'
+        );
+        $this->data['capture_link'] = $this->url->link(
+            'payment/yamoney/payments',
+            'token=' . $this->session->data['token'] . '&update_statuses=2',
+            'SSL'
         );
         $this->response->setOutput($this->render());
     }
