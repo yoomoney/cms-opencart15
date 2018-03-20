@@ -4,7 +4,7 @@ endif; ?>
     <form accept-charset="UTF-8" enctype="application/x-www-form-urlencoded" method="POST" id='YamoneyForm' action="<?php echo $paymentMethod->getFormUrl(); ?>">
         <input type="hidden" name="cms_name" value="<?php echo $cmsname; ?>" >
 
-        <?php include dirname(__FILE__) . '/yamoney/' . $tpl . '.tpl.php'; ?>
+        <?php include dirname(__FILE__) . '/yamoney/' . $tpl . '.tpl'; ?>
 
         <div class="buttons">
             <?php if ($paymentMethod->isModeKassa() && $paymentMethod->useYandexButton()) : ?>
