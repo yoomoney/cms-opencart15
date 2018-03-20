@@ -21,7 +21,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.0.6';
+    private $moduleVersion = '1.0.7';
 
     /**
      * @var ModelPaymentYaMoney
@@ -515,7 +515,7 @@ class ControllerPaymentYaMoney extends Controller
         $setting = $this->model_setting_setting->getSetting('yamoney');
         $array = array(
             'url' => $this->config->get('config_secure') ? HTTP_CATALOG : HTTPS_CATALOG,
-            'cms' => 'opencart',
+            'cms' => 'api-opencart',
             'version' => VERSION,
             'ver_mod' => $this->moduleVersion,
             'yacms' => false,
