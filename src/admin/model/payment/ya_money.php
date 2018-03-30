@@ -85,7 +85,7 @@ class ModelPaymentYaMoney extends Model
             require_once $path . 'YandexMoneyPaymentBilling.php';
             $this->paymentMethods = array(
                 YandexMoneyPaymentMethod::MODE_NONE    => new YandexMoneyPaymentMethod($this->config),
-                YandexMoneyPaymentMethod::MODE_KASSA   => new YandexMoneyPaymentKassa($this->config),
+                YandexMoneyPaymentMethod::MODE_KASSA   => new YandexMoneyPaymentKassa($this->config, $this->language),
                 YandexMoneyPaymentMethod::MODE_MONEY   => new YandexMoneyPaymentMoney($this->config),
                 YandexMoneyPaymentMethod::MODE_BILLING => new YandexMoneyPaymentBilling($this->config),
             );
@@ -273,7 +273,7 @@ class ModelPaymentYaMoney extends Model
         $connector = new GitHubConnector();
         $fileName = $connector->downloadRelease($this->repository, $tag, $dir);
         if (empty($fileName)) {
-            $this->log('error', 'Не удалось загрузить архив с обновлением');
+            $this->log('error', $this->laguage->get('updater_log_text_load_failed'));
             return false;
         }
 
@@ -364,18 +364,6 @@ class ModelPaymentYaMoney extends Model
 
     private function dateDiffToString($timestamp)
     {
-        /*
-        $diff = time() - $timestamp;
-        if ($diff < 60) {
-            return 'только что';
-        } elseif ($diff < 120) {
-            return 'минуту назад';
-        } elseif ($diff < 180) {
-            return 'две минуты назад';
-        } elseif ($diff < 300) {
-            return 'пару минут назад';
-        }
-        */
         return date('d.m.Y H:i', $timestamp);
     }
 

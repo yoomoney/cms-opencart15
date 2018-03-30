@@ -76,7 +76,7 @@ class ModelPaymentYaMoney extends Model
             require_once $path.'YandexMoneyPaymentBilling.php';
             $this->paymentMethods = array(
                 YandexMoneyPaymentMethod::MODE_NONE    => new YandexMoneyPaymentMethod($this->config),
-                YandexMoneyPaymentMethod::MODE_KASSA   => new YandexMoneyPaymentKassa($this->config),
+                YandexMoneyPaymentMethod::MODE_KASSA   => new YandexMoneyPaymentKassa($this->config, $this->language),
                 YandexMoneyPaymentMethod::MODE_MONEY   => new YandexMoneyPaymentMoney($this->config),
                 YandexMoneyPaymentMethod::MODE_BILLING => new YandexMoneyPaymentBilling($this->config),
             );
@@ -162,7 +162,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.0.7',
+                        'module_version' => '1.0.8',
                     ));
 
             if ($paymentMethod->getSendReceipt()) {
