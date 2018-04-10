@@ -1,5 +1,7 @@
 <?php
 
+use YandexCheckout\Client;
+
 require_once dirname(__FILE__).'/lib/Common/AbstractEnum.php';
 require_once dirname(__FILE__).'/lib/Model/PaymentMethodType.php';
 
@@ -167,18 +169,18 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
     public function getPaymentMethods()
     {
         $titles = array(
-            YaMoney\Model\PaymentMethodType::BANK_CARD      => $this->language->get('bank_cards_title'),
-            YaMoney\Model\PaymentMethodType::YANDEX_MONEY   => $this->language->get('text_method_yandex_money'),
-            YaMoney\Model\PaymentMethodType::SBERBANK       => $this->language->get('text_method_sberbank'),
-            YaMoney\Model\PaymentMethodType::QIWI           => $this->language->get('text_method_qiwi'),
-            YaMoney\Model\PaymentMethodType::WEBMONEY       => $this->language->get('text_method_webmoney'),
-            YaMoney\Model\PaymentMethodType::CASH           => $this->language->get('cash_title'),
-            YaMoney\Model\PaymentMethodType::MOBILE_BALANCE => $this->language->get('mobile_balance_title'),
-            YaMoney\Model\PaymentMethodType::ALFABANK       => $this->language->get('text_method_alfabank'),
+            YandexCheckout\Model\PaymentMethodType::BANK_CARD      => $this->language->get('bank_cards_title'),
+            YandexCheckout\Model\PaymentMethodType::YANDEX_MONEY   => $this->language->get('text_method_yandex_money'),
+            YandexCheckout\Model\PaymentMethodType::SBERBANK       => $this->language->get('text_method_sberbank'),
+            YandexCheckout\Model\PaymentMethodType::QIWI           => $this->language->get('text_method_qiwi'),
+            YandexCheckout\Model\PaymentMethodType::WEBMONEY       => $this->language->get('text_method_webmoney'),
+            YandexCheckout\Model\PaymentMethodType::CASH           => $this->language->get('cash_title'),
+            YandexCheckout\Model\PaymentMethodType::MOBILE_BALANCE => $this->language->get('mobile_balance_title'),
+            YandexCheckout\Model\PaymentMethodType::ALFABANK       => $this->language->get('text_method_alfabank'),
         );
 
         $result = array();
-        foreach (YaMoney\Model\PaymentMethodType::getEnabledValues() as $value) {
+        foreach (YandexCheckout\Model\PaymentMethodType::getEnabledValues() as $value) {
             $result[$value] = $titles[$value];
         }
 
@@ -254,7 +256,7 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             $password = $this->password;
         }
 
-        $client = new \YaMoney\Client\YandexMoneyApi();
+        $client = new Client();
         $client->setAuth($shopId, $password);
         if (!empty($logger)) {
             $client->setLogger($logger);
@@ -262,7 +264,7 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
 
         try {
             $payment = $client->getPaymentInfo('00000000-0000-0000-0000-000000000001');
-        } catch (\YaMoney\Common\Exceptions\NotFoundException $e) {
+        } catch (\YandexCheckout\Common\Exceptions\NotFoundException $e) {
             return true;
         } catch (\Exception $e) {
             return false;

@@ -21,7 +21,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.0.8';
+    private $moduleVersion = '1.0.9';
 
     /**
      * @var ModelPaymentYaMoney
@@ -305,7 +305,7 @@ class ControllerPaymentYaMoney extends Controller
             if ($this->request->get['update_statuses'] == 2) {
                 foreach ($paymentObjects as $payment) {
                     $this->getModel()->log('info', 'Check payment#'.$payment['payment_id']);
-                    if ($payment['status'] === \YaMoney\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
+                    if ($payment['status'] === \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
                         $this->getModel()->log('info', 'Capture payment#'.$payment['payment_id']);
                         if ($this->getModel()->capturePayment($kassa, $payment, false)) {
                             $orderId   = $orderIds[$payment->getId()];
