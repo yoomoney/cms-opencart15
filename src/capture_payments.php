@@ -148,7 +148,7 @@ if (!empty($payments)) {
         $total = 0;
         foreach ($paymentObjects as $payment) {
             echo '    Payment ' . $payment->getId();
-            if ($payment['status'] === \YaMoney\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
+            if ($payment['status'] === \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
                 $total++;
                 echo ' capturing...';
                 if ($model->capturePayment($kassa, $payment, false)) {

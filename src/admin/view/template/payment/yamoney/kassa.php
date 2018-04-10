@@ -84,7 +84,7 @@
                     <div class="col-sm-9 col-sm-offset-3 selectPayOpt">
                         <p style="margin: 15px 0 0;"><?php echo $lang->get('kassa_payment_method_label'); ?></p>
                         <?php foreach ($kassa->getPaymentMethods() as $val => $name) : ?>
-                            <?php if ($kassa->isTestMode() && !in_array($val, array(\YaMoney\Model\PaymentMethodType::YANDEX_MONEY, \YaMoney\Model\PaymentMethodType::BANK_CARD))) continue; ?>
+                            <?php if ($kassa->isTestMode() && !in_array($val, array(\YandexCheckout\Model\PaymentMethodType::YANDEX_MONEY, \YandexCheckout\Model\PaymentMethodType::BANK_CARD))) continue; ?>
                             <div class="checkbox">
                                 <label>
                                     <input name="ya_kassa_payment_options[]" class="cls_ya_paymentOpt" type="checkbox"

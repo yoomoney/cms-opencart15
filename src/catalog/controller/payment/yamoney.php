@@ -1,5 +1,9 @@
 <?php
 
+use YandexCheckout\Model\Notification\NotificationSucceeded;
+use YandexCheckout\Model\Notification\NotificationWaitingForCapture;
+use YandexCheckout\Model\NotificationEventType;
+
 /**
  * Class ControllerPaymentYandexMoney
  *
@@ -63,12 +67,12 @@ class ControllerPaymentYaMoney extends Controller
                 $this->jsonError('Не указан способ оплаты');
             } elseif (!$paymentMethod->isPaymentMethodEnabled($paymentType)) {
                 $this->jsonError('Указан неверный способ оплаты');
-            } elseif ($paymentType === \YaMoney\Model\PaymentMethodType::QIWI) {
+            } elseif ($paymentType === \YandexCheckout\Model\PaymentMethodType::QIWI) {
                 $phone = isset($_GET['qiwiPhone']) ? preg_replace('/[^\d]/', '', $_GET['qiwiPhone']) : '';
                 if (empty($phone)) {
                     $this->jsonError('Не был указан номер телефона');
                 }
-            } elseif ($paymentType === \YaMoney\Model\PaymentMethodType::ALFABANK) {
+            } elseif ($paymentType === \YandexCheckout\Model\PaymentMethodType::ALFABANK) {
                 $login = isset($_GET['alphaLogin']) ? trim($_GET['alphaLogin']) : '';
                 if (empty($login)) {
                     $this->jsonError('Не был указан логин в Альфа-клике');
@@ -83,11 +87,11 @@ class ControllerPaymentYaMoney extends Controller
             'success' => true,
             'redirect' => $this->url->link('payment/yamoney/confirm', 'order_id=' . $orderInfo['order_id'], 'SSL'),
         );
-        /** @var \YaMoney\Model\Confirmation\ConfirmationRedirect $confirmation */
+        /** @var \YandexCheckout\Model\Confirmation\ConfirmationRedirect $confirmation */
         $confirmation = $payment->getConfirmation();
         if ($confirmation === null) {
             $this->getModel()->log('warning', 'Confirmation in created payment equals null');
-        } elseif ($confirmation->getType() === \YaMoney\Model\ConfirmationType::REDIRECT) {
+        } elseif ($confirmation->getType() === \YandexCheckout\Model\ConfirmationType::REDIRECT) {
             $result['redirect'] = $confirmation->getConfirmationUrl();
         }
         if ($paymentMethod->getCreateOrderBeforeRedirect()) {
@@ -125,7 +129,7 @@ class ControllerPaymentYaMoney extends Controller
             $payment = $this->getModel()->getOrderPayment($paymentMethod, $orderId);
             if ($payment === null) {
                 $this->redirect($this->url->link('checkout/checkout', '', true));
-            } elseif ($payment->getStatus() === \YaMoney\Model\PaymentStatus::CANCELED) {
+            } elseif ($payment->getStatus() === \YandexCheckout\Model\PaymentStatus::CANCELED) {
                 $pageId = $this->config->get('ya_kassa_page_failure');
                 if (empty($pageId) || $pageId < 0) {
                     $redirectUrl = $this->url->link('checkout/checkout', '', true);
@@ -142,7 +146,7 @@ class ControllerPaymentYaMoney extends Controller
             if ($orderInfo['order_status_id'] <= 0) {
                 $this->getModel()->confirmOrder($paymentMethod, $orderId);
             }
-            if ($payment->getStatus() === \YaMoney\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
+            if ($payment->getStatus() === \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
                 if ($this->getModel()->capturePayment($paymentMethod, $payment, false)) {
                     $this->getModel()->confirmOrderPayment($orderId, $payment, $paymentMethod->getOrderStatusId());
                     $this->getModel()->log('info', 'Платёж для заказа №' . $orderId . ' подтверждён');
@@ -204,6 +208,8 @@ class ControllerPaymentYaMoney extends Controller
             exit();
         }
 
+        $this->getModel()->log('debug', 'Notification: ' . $data);
+
         /** @var YandexMoneyPaymentKassa $paymentMethod */
         $paymentMethod = $this->getModel()->getPaymentMethod($this->config->get('ya_mode'));
         if (!$paymentMethod->isModeKassa()) {
@@ -212,7 +218,16 @@ class ControllerPaymentYaMoney extends Controller
             exit();
         }
 
-        $notification = new \YaMoney\Model\Notification\NotificationWaitingForCapture($json);
+        try {
+            $notification = ($json['event'] === NotificationEventType::PAYMENT_SUCCEEDED)
+                ? new NotificationSucceeded($json)
+                : new NotificationWaitingForCapture($json);
+        } catch (\Exception $e) {
+            $this->getModel()->log('error', 'Invalid notification object - ' . $e->getMessage());
+            header('HTTP/1.1 400 Invalid object in body');
+            return;
+        }
+
         $orderId = $this->getModel()->getOrderIdByPayment($notification->getObject());
         if ($orderId <= 0) {
             $this->getModel()->log('warning', 'Order not exists in capture notification' . $orderId);
@@ -369,7 +384,7 @@ class ControllerPaymentYaMoney extends Controller
         foreach ($paymentMethod->getPaymentMethods() as $method => $name) {
             if ($paymentMethod->isPaymentMethodEnabled($method)) {
                 if ($paymentMethod->isTestMode()) {
-                    if ($method === \YaMoney\Model\PaymentMethodType::BANK_CARD || $method === \YaMoney\Model\PaymentMethodType::YANDEX_MONEY) {
+                    if ($method === \YandexCheckout\Model\PaymentMethodType::BANK_CARD || $method === \YandexCheckout\Model\PaymentMethodType::YANDEX_MONEY) {
                         $this->data['allow_methods'][$method] = $this->language->get('text_method_' . $method);
                     }
                 } else {

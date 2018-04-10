@@ -1,19 +1,15 @@
 <?php
 
 define('DS', DIRECTORY_SEPARATOR);
-define('YANDEX_MONEY_SDK_ROOT_PATH', dirname(__FILE__) . '/lib');
-define('YANDEX_MONEY_PSR_LOG_PATH', dirname(__FILE__) . '/vendor/psr-log');
+
+require_once dirname(__FILE__).'/lib/autoload.php';
+
+
 define('YANDEX_MONEY_MODULE_PATH', dirname(__FILE__));
 
 function yandexMoneyLoadClass($className)
 {
-    if (strncmp('YaMoney', $className, 7) === 0) {
-        $path = YANDEX_MONEY_SDK_ROOT_PATH;
-        $length = 7;
-    } elseif (strncmp('Psr\Log', $className, 7) === 0) {
-        $path = YANDEX_MONEY_PSR_LOG_PATH;
-        $length = 7;
-    } elseif (strncmp('YandexMoneyModule', $className, 17) === 0) {
+    if (strncmp('YandexMoneyModule', $className, 17) === 0) {
         $path = YANDEX_MONEY_MODULE_PATH;
         $length = 17;
     } else {

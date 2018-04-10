@@ -1,5 +1,7 @@
 <?php
 
+use YandexCheckout\Client;
+
 class ModelPaymentYaMoney extends Model
 {
     private $paymentMethods;
@@ -415,7 +417,7 @@ class ModelPaymentYaMoney extends Model
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param $payments
-     * @return \YaMoney\Model\PaymentInterface[]
+     * @return \YandexCheckout\Model\PaymentInterface[]
      */
     public function updatePaymentsStatuses(YandexMoneyPaymentKassa $paymentMethod, $payments)
     {
@@ -424,15 +426,15 @@ class ModelPaymentYaMoney extends Model
         $this->getPaymentMethods();
         $client = $this->getClient($paymentMethod);
         $statuses = array(
-            \YaMoney\Model\PaymentStatus::PENDING,
-            \YaMoney\Model\PaymentStatus::WAITING_FOR_CAPTURE,
+            \YandexCheckout\Model\PaymentStatus::PENDING,
+            \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE,
         );
         foreach ($payments as $payment) {
             if (in_array($payment['status'], $statuses)) {
                 try {
                     $paymentObject = $client->getPaymentInfo($payment['payment_id']);
                     if ($paymentObject === null) {
-                        $this->updatePaymentStatus($payment['payment_id'], \YaMoney\Model\PaymentStatus::CANCELED);
+                        $this->updatePaymentStatus($payment['payment_id'], \YandexCheckout\Model\PaymentStatus::CANCELED);
                     } else {
                         $result[] = $paymentObject;
                         if ($paymentObject->getStatus() !== $payment['status']) {
@@ -450,7 +452,7 @@ class ModelPaymentYaMoney extends Model
     /**
      * @param int $orderId
      * @param array $orderInfo
-     * @param \YaMoney\Model\PaymentInterface $payment
+     * @param \YandexCheckout\Model\PaymentInterface $payment
      * @param int $statusId
      */
     public function confirmOrderPayment($orderId, $orderInfo, $payment, $statusId)
@@ -481,7 +483,7 @@ class ModelPaymentYaMoney extends Model
 
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
-     * @param \YaMoney\Model\PaymentInterface $payment
+     * @param \YandexCheckout\Model\PaymentInterface $payment
      * @param bool $fetchPayment
      * @return bool
      */
@@ -497,13 +499,13 @@ class ModelPaymentYaMoney extends Model
             }
         }
 
-        if ($payment->getStatus() !== \YaMoney\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
-            return $payment->getStatus() === \YaMoney\Model\PaymentStatus::SUCCEEDED;
+        if ($payment->getStatus() !== \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
+            return $payment->getStatus() === \YandexCheckout\Model\PaymentStatus::SUCCEEDED;
         }
 
         $client = $this->getClient($paymentMethod);
         try {
-            $builder = \YaMoney\Request\Payments\Payment\CreateCaptureRequest::builder();
+            $builder = \YandexCheckout\Request\Payments\Payment\CreateCaptureRequest::builder();
             $builder->setAmount($payment->getAmount());
             $key = uniqid('', true);
             $tries = 0;
@@ -533,12 +535,12 @@ class ModelPaymentYaMoney extends Model
 
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
-     * @return \YaMoney\Client\YandexMoneyApi
+     * @return Client
      */
     private function getClient(YandexMoneyPaymentKassa $paymentMethod)
     {
         if ($this->client === null) {
-            $this->client = new \YaMoney\Client\YandexMoneyApi();
+            $this->client = new Client();
             $this->client->setAuth($paymentMethod->getShopId(), $paymentMethod->getPassword());
             $this->client->setLogger($this);
         }
@@ -551,7 +553,7 @@ class ModelPaymentYaMoney extends Model
         if ($capturedAt !== null) {
             $sql .= ', `captured_at`=\'' . $capturedAt->format('Y-m-d H:i:s') . '\'';
         }
-        if ($status !== \YaMoney\Model\PaymentStatus::CANCELED && $status !== \YaMoney\Model\PaymentStatus::PENDING) {
+        if ($status !== \YandexCheckout\Model\PaymentStatus::CANCELED && $status !== \YandexCheckout\Model\PaymentStatus::PENDING) {
             $sql .= ', `paid`=\'Y\'';
         }
         $sql .= ' WHERE `payment_id`=\'' . $paymentId . '\'';
