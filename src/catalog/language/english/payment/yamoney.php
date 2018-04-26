@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+$_['language_code'] = 'en';
 // Text
 $_['text_title'] = 'Yandex.Money';
 $_['text_method'] = 'Payment methods';
@@ -13,6 +14,8 @@ $_['text_method_pb'] = 'Payment via Promsvyazbank';
 $_['text_method_qiwi'] = 'QIWI Wallet';
 $_['text_method_qp'] = 'Trust payment (Qppi.ru)';
 $_['text_method_mp'] = 'Mobile payment kiosk';
+$_['text_method_installments'] = 'Installments';
+$_['text_method_installments_amount'] = ' (%s ₽ per month)';
 $_['bank_cards_title'] = 'Bank cards';
 $_['cash_title'] = 'Cash via payment kiosks';
 $_['mobile_balance_title'] = 'Direct carrier billing';
@@ -27,3 +30,5 @@ $_['kassa_alfa_login_label'] = 'Specify the login, and we\'ll send the bill in A
 $_['text_repay'] = 'Pay';
 $_['text_order'] = 'Order';
 $_['text_comment'] = 'Comment';
+
+$_['yamoney_pay_button_text'] = '<span>Pay</span>with Yandex';

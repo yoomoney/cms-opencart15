@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // Heading
 $_['heading_title'] = 'Yandex.Money 2.0';
 
@@ -36,6 +36,7 @@ $_['kassa_payment_mode_label'] = 'Select payment method';
 $_['kassa_payment_mode_smart_pay'] = 'On Yandex.Checkout\'s site';
 $_['kassa_payment_mode_shop_pay'] = 'On the store\'s site';
 $_['kassa_force_button_name'] = 'Use a button with \'Pay with Yandex\' text';
+$_['kassa_add_installments_button'] = 'Add the Installments payment method to checkout page';
 $_['kassa_payment_mode_help'] = "<a href='https://tech.yandex.ru/money/doc/payment-solution/payment-form/payment-form-docpage/' target='_blank'>More about payment scenarios</a>";
 $_['kassa_payment_method_label'] = "Check payment methods from the contract";
 $_['forwork_money'] = "";
@@ -151,6 +152,7 @@ $_['text_method_pb'] = 'Promsvyazbank';
 $_['text_method_qiwi'] = 'QIWI Wallet';
 $_['text_method_qp'] = 'Deferred payment (QPPI.ru)';
 $_['text_method_mp'] = 'Mobile payment kiosk';
+$_['text_method_installments'] = 'Installments';
 $_['bank_cards_title'] = 'Bank cards';
 $_['cash_title'] = 'Cash via payment kiosks';
 $_['mobile_balance_title'] = 'Direct carrier billing';

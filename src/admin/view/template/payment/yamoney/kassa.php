@@ -64,11 +64,20 @@
                         </label>
                     </div>
                     <div class="col-sm-9 col-sm-offset-3 selectPayKassa">
-                        <label for="ya_kassa_force_button_name" class="radio-inline control-label" style="margin-left: -20px;">
-                            <input type="checkbox" name="ya_kassa_force_button_name" id="ya_kassa_force_button_name"
-                                value="1"<?php echo ($ya_kassa_force_button_name == '1' ? ' checked="checked"' : ''); ?> />
-                            <?php echo $lang->get('kassa_force_button_name'); ?>
-                        </label>
+                        <div class="checkbox">
+                            <label for="ya_kassa_force_button_name" class="radio-inline control-label">
+                                <input type="checkbox" name="ya_kassa_force_button_name" id="ya_kassa_force_button_name"
+                                       value="1"<?php echo ($kassa->isYandexButton() ? ' checked="checked"' : ''); ?> />
+                                <?php echo $lang->get('kassa_force_button_name'); ?>
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label for="ya_kassa_add_installments_button" class="radio-inline control-label">
+                                <input type="checkbox" name="ya_kassa_add_installments_button" id="ya_kassa_add_installments_button"
+                                       value="1"<?php echo ($kassa->isAddInstallmentsButton() ? ' checked="checked"' : ''); ?> />
+                                <?php echo $lang->get('kassa_add_installments_button'); ?>
+                            </label>
+                        </div>
                     </div>
                     <div class="col-sm-9 col-sm-offset-3">
                     <?php else: ?>

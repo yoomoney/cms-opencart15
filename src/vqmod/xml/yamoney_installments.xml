@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+    <id>yamoney_installments</id>
+    <version>1.4.x and above</version>
+    <vqmver required="true">2.6.0</vqmver>
+    <author>Yandex.Money</author>
+
+    <file name="catalog/controller/product/product.php" error="skip">
+        <operation error="skip" info="Add Credit info flag">
+            <search position="replace"><![CDATA[$product_info = $this->model_catalog_product->getProduct($product_id);]]></search>
+            <add><![CDATA[
+                $product_info = $this->model_catalog_product->getProduct($product_id);
+                $paymentOptions = (array)$this->config->get('ya_kassa_payment_options');
+                $enableCreditInEpl = $this->config->get('ya_kassa_payment_mode') === 'kassa' && $this->config->get('ya_kassa_add_installments_button');
+                $enableCreditInShopSide = $this->config->get('ya_kassa_payment_mode') === 'shop' && in_array('installments', $paymentOptions);
+                $showCreditInfo = $this->config->get('ya_kassa_enable') && ($enableCreditInEpl || $enableCreditInShopSide);
+
+                $this->data['yamoney_showCreditInfo'] = $showCreditInfo;
+                $this->data['yamoney_shop_id'] = $this->config->get('ya_shopid');
+                $this->data['yamoney_credit_price'] = $this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax'));
+                $this->data['yamoney_language_code'] = $this->config->get('config_language');
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="catalog/view/theme/*/template/common/header.tpl" error="skip">
+        <operation error="skip" info="Add Credit UI">
+            <search position="before"><![CDATA[</head>]]></search>
+            <add><![CDATA[
+                <script src="https://static.yandex.net/kassa/pay-in-parts/ui/v1/"></script>
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="catalog/view/theme/*/template/product/product.tpl" error="skip">
+        <operation error="skip" info="Add Credit info template">
+            <search position="before"><![CDATA[<div class="cart">]]></search>
+            <add><![CDATA[
+                <?php if($yamoney_showCreditInfo):?>
+                    <div>
+                        <div class="installments-info"></div>
+                    </div>
+                    <br>
+                <?php endif;?>
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="catalog/view/theme/*/template/product/product.tpl" error="skip">
+        <operation error="skip" info="Add Credit UI">
+            <search position="before"><![CDATA[<?php echo $footer; ?>]]></search>
+            <add><![CDATA[
+                <script>
+                    const $yamoneyCheckoutCreditUI = YandexCheckoutCreditUI({
+                        shopId: '<?php echo $yamoney_shop_id;?>',
+                        sum: '<?php echo round($yamoney_credit_price, 2);?>',
+                        language: '<?php echo $yamoney_language_code;?>'
+                    });
+
+                    const yamoneyCheckoutCreditButton = $yamoneyCheckoutCreditUI({
+                        type: 'info',
+                        domSelector: '.installments-info'
+                    });
+                </script>
+            ]]></add>
+        </operation>
+    </file>
+
+</modification>

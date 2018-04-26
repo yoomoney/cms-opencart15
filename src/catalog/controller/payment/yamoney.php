@@ -385,10 +385,10 @@ class ControllerPaymentYaMoney extends Controller
             if ($paymentMethod->isPaymentMethodEnabled($method)) {
                 if ($paymentMethod->isTestMode()) {
                     if ($method === \YandexCheckout\Model\PaymentMethodType::BANK_CARD || $method === \YandexCheckout\Model\PaymentMethodType::YANDEX_MONEY) {
-                        $this->data['allow_methods'][$method] = $this->language->get('text_method_' . $method);
+                        $this->data['allow_methods'][$method] = $name;
                     }
                 } else {
-                    $this->data['allow_methods'][$method] = $this->language->get('text_method_' . $method);
+                    $this->data['allow_methods'][$method] = $name;
                 }
             }
         }
