@@ -28,6 +28,9 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
     /** @var bool */
     private $yandexButton;
 
+    /** @var bool */
+    private $addInstallmentsButton;
+
     public $language;
 
     public function __construct($config, $language = null)
@@ -40,6 +43,7 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
         $this->epl                         = $this->config->get('ya_kassa_payment_mode') == 'kassa';
         $this->status                      = (int)$this->config->get('ya_kassa_new_order_status');
         $this->yandexButton                = $this->config->get('ya_kassa_force_button_name') == '1';
+        $this->addInstallmentsButton       = $this->config->get('ya_kassa_add_installments_button') == '1';
         $this->createOrderBeforeRedirect   = $this->config->get('ya_kassa_create_order_before_redirect') == '1';
         $this->clearCartAfterOrderCreation = $this->config->get('ya_kassa_clear_cart_before_redirect') == '1';
         $this->language                    = $language;
@@ -158,6 +162,7 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             'ya_kassa_sort_order',
             'ya_kassa_id_zone',
             'ya_kassa_force_button_name',
+            'ya_kassa_add_installments_button',
             'ya_kassa_create_order_before_redirect',
             'ya_kassa_clear_cart_before_redirect',
         );
@@ -177,6 +182,7 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             YandexCheckout\Model\PaymentMethodType::CASH           => $this->language->get('cash_title'),
             YandexCheckout\Model\PaymentMethodType::MOBILE_BALANCE => $this->language->get('mobile_balance_title'),
             YandexCheckout\Model\PaymentMethodType::ALFABANK       => $this->language->get('text_method_alfabank'),
+            YandexCheckout\Model\PaymentMethodType::INSTALLMENTS   => $this->language->get('text_method_installments'),
         );
 
         $result = array();
@@ -271,5 +277,30 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
         }
 
         return true;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isYandexButton()
+    {
+        return $this->yandexButton;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAddInstallmentsButton()
+    {
+        return $this->addInstallmentsButton;
+    }
+
+    /**
+     * @param string $key
+     * @return string
+     */
+    public function i18n($key)
+    {
+        return $this->language->get($key);
     }
 }
