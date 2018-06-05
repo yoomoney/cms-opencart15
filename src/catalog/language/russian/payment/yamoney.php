@@ -34,4 +34,6 @@ $_['text_repay'] = 'Оплатить';
 $_['text_order'] = 'Заказ';
 $_['text_comment'] = 'Комментарий';
 
+$_['kassa_description_default_placeholder'] = 'Оплата заказа №%order_id%';
+
 $_['yamoney_pay_button_text'] = '<span>Заплатить</span>через Яндекс';

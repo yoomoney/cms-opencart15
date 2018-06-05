@@ -155,6 +155,7 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             'ya_kassa_page_failure',
             'ya_kassa_page_success_mp',
             'ya_kassa_payment_method_name',
+            'ya_kassa_description_template',
             'ya_kassa_send_receipt',
             'ya_kassa_receipt_tax_id',
             'ya_kassa_new_order_status',
