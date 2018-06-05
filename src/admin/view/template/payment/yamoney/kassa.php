@@ -146,6 +146,14 @@
                         <p class="help-block"><?php echo $lang->get('kassa_page_title_help'); ?></p>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-3" for="ya_kassa_description_template"><?php echo $lang->get('kassa_description_title'); ?></label>
+                    <div class="col-sm-8">
+                        <input name="ya_kassa_description_template" type="text" class="form-control"
+                               id="ya_kassa_description_template" value="<?= $ya_kassa_description_template ?: $lang->get('kassa_description_default_placeholder'); ?>" />
+                        <p class="help-block"><?php echo $lang->get('kassa_description_help'); ?></p>
+                    </div>
+                </div>
 
                 <!-- 54-ФЗ -->
                 <div class="form-group">

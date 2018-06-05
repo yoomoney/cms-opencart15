@@ -31,4 +31,6 @@ $_['text_repay'] = 'Pay';
 $_['text_order'] = 'Order';
 $_['text_comment'] = 'Comment';
 
+$_['kassa_description_default_placeholder'] = 'Payment for order No. %order_id%';
+
 $_['yamoney_pay_button_text'] = '<span>Pay</span>with Yandex';

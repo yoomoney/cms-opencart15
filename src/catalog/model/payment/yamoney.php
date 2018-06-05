@@ -1,6 +1,7 @@
 <?php
 
 use YandexCheckout\Client;
+use YandexCheckout\Model\Payment;
 
 require_once dirname(__FILE__).'/yamoney/autoload.php';
 
@@ -143,10 +144,7 @@ class ModelPaymentYaMoney extends Model
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param $orderInfo
-     * @param $paymentMethodData
-     *
      * @return \YandexCheckout\Model\PaymentInterface
-     * @throws Exception
      */
     public function createPayment(YandexMoneyPaymentKassa $paymentMethod, $orderInfo)
     {
@@ -159,14 +157,14 @@ class ModelPaymentYaMoney extends Model
             $builder->setAmount($amount)
                     ->setCurrency('RUB')
                     ->setCapture(true)
+                    ->setDescription($this->createDescription($orderInfo))
                     ->setClientIp($_SERVER['REMOTE_ADDR'])
                     ->setSavePaymentMethod(false)
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.0.10',
+                        'module_version' => '1.0.11',
                     ));
-
             if ($paymentMethod->getSendReceipt()) {
                 $taxRates = $this->config->get('ya_kassa_receipt_tax_id');
                 $this->setReceiptItems($builder, $orderInfo);
@@ -519,5 +517,25 @@ class ModelPaymentYaMoney extends Model
         }
         $sql .= ' WHERE `payment_id`=\''.$paymentId.'\'';
         $this->db->query($sql);
+    }
+
+    /**
+     * @param $orderInfo
+     * @return bool|string
+     */
+    private function createDescription($orderInfo)
+    {
+        $descriptionTemplate = $this->config->get('ya_kassa_description_template') ?
+            : $this->language->get('kassa_description_default_placeholder');
+
+        $replace = array();
+        foreach ($orderInfo as $key => $value) {
+            if (is_scalar($value)) {
+                $replace['%'.$key.'%'] = $value;
+            }
+        }
+        $description = strtr($descriptionTemplate, $replace);
+
+        return (string)mb_substr($description, 0, Payment::MAX_LENGTH_DESCRIPTION);
     }
 }
