@@ -156,6 +156,9 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             'ya_kassa_page_success_mp',
             'ya_kassa_payment_method_name',
             'ya_kassa_description_template',
+            'ya_kassa_enable_hold_mode',
+            'ya_kassa_hold_order_status',
+            'ya_kassa_cancel_order_status',
             'ya_kassa_send_receipt',
             'ya_kassa_receipt_tax_id',
             'ya_kassa_new_order_status',
@@ -270,7 +273,7 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
         }
 
         try {
-            $payment = $client->getPaymentInfo('00000000-0000-0000-0000-000000000001');
+            $client->getPaymentInfo('00000000-0000-0000-0000-000000000001');
         } catch (\YandexCheckout\Common\Exceptions\NotFoundException $e) {
             return true;
         } catch (\Exception $e) {

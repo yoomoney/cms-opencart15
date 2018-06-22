@@ -1,8 +1,11 @@
 <?php
 
+use YandexCheckout\Client;
 use YandexCheckout\Model\Notification\NotificationSucceeded;
 use YandexCheckout\Model\Notification\NotificationWaitingForCapture;
 use YandexCheckout\Model\NotificationEventType;
+use YandexCheckout\Model\PaymentMethodType;
+use YandexCheckout\Model\PaymentStatus;
 
 /**
  * Class ControllerPaymentYandexMoney
@@ -125,32 +128,18 @@ class ControllerPaymentYaMoney extends Controller
                 $this->errorRedirect('Invalid order id in return link: ' . json_encode($_GET['order_id']));
             }
 
-            $this->getModel()->log('info', 'Подтверждение платежа (возврат из кассы) для заказа №' . $orderId);
-            $payment = $this->getModel()->getOrderPayment($paymentMethod, $orderId);
+            $this->getModel()->log('info', 'Возврат пользователя из кассы для заказа №' . $orderId);
+            $payment = $this->getModel()->getPaymentByOrderId($paymentMethod, $orderId);
             if ($payment === null) {
                 $this->redirect($this->url->link('checkout/checkout', '', true));
             } elseif ($payment->getStatus() === \YandexCheckout\Model\PaymentStatus::CANCELED) {
                 $pageId = $this->config->get('ya_kassa_page_failure');
-                if (empty($pageId) || $pageId < 0) {
-                    $redirectUrl = $this->url->link('checkout/checkout', '', true);
-                } else {
-                    $redirectUrl = $this->url->link('information/information', 'information_id=' . $pageId, 'SSL');
-                }
+                $redirectUrl = (empty($pageId) || $pageId < 0)
+                    ? $this->url->link('checkout/checkout', '', true)
+                    : $this->url->link('information/information', 'information_id=' . $pageId, 'SSL');
                 $this->redirect($redirectUrl);
             } elseif (!$payment->getPaid()) {
                 $this->redirect($this->url->link('checkout/checkout', '', true));
-            }
-
-            $this->load->model('checkout/order');
-            $orderInfo = $this->model_checkout_order->getOrder($orderId);
-            if ($orderInfo['order_status_id'] <= 0) {
-                $this->getModel()->confirmOrder($paymentMethod, $orderId);
-            }
-            if ($payment->getStatus() === \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
-                if ($this->getModel()->capturePayment($paymentMethod, $payment, false)) {
-                    $this->getModel()->confirmOrderPayment($orderId, $payment, $paymentMethod->getOrderStatusId());
-                    $this->getModel()->log('info', 'Платёж для заказа №' . $orderId . ' подтверждён');
-                }
             }
 
             $pageId = $this->config->get('ya_kassa_page_success');
@@ -158,11 +147,10 @@ class ControllerPaymentYaMoney extends Controller
             if (isset($this->session->data['order_id']) && $orderId === $this->session->data['order_id']) {
                 $this->cart->clear();
             }
-            if (empty($pageId) || $pageId < 0) {
-                $redirectUrl = $this->url->link('checkout/success', 'order_id=' . $orderId, 'SSL');
-            } else {
-                $redirectUrl = $this->url->link('information/information', 'information_id=' . $pageId, 'SSL');
-            }
+            $redirectUrl = (empty($pageId) || $pageId < 0)
+                ? $this->url->link('checkout/success', 'order_id=' . $orderId, 'SSL')
+                : $this->url->link('information/information', 'information_id=' . $pageId, 'SSL');
+
             $this->redirect($redirectUrl);
 
         } elseif ($paymentMethod instanceof YandexMoneyPaymentMoney) {
@@ -190,6 +178,7 @@ class ControllerPaymentYaMoney extends Controller
      */
     public function capture()
     {
+        $this->language->load('payment/yamoney');
         $data = file_get_contents('php://input');
         if (empty($data)) {
             $log = 'Empty body in capture notification, get: ' . json_encode($_GET) . ', post: ' . json_encode($_POST);
@@ -245,20 +234,40 @@ class ControllerPaymentYaMoney extends Controller
         }
 
         $this->getModel()->log('info', 'Пришла нотификация для платежа ' . $notification->getObject()->getId() . ' для заказа №' . $orderId);
-        if ($orderId > 0) {
-            if ($this->getModel()->capturePayment($paymentMethod, $notification->getObject())) {
-                $this->getModel()->confirmOrderPayment($orderId, $notification->getObject(), $paymentMethod->getOrderStatusId());
-                $this->getModel()->log('info', 'Платёж для заказа №' . $orderId . ' подтверждён');
-            } else {
-                $this->getModel()->log('error', 'Failed to capture payment: ' . $notification->getObject()->getId());
-                header('HTTP/1.1 500 Internal server error');
+
+        $client = new Client();
+        $client->setAuth($paymentMethod->getShopId(), $paymentMethod->getPassword());
+        $client->setLogger($this->getModel());
+
+        try {
+            $payment = $client->getPaymentInfo($notification->getObject()->getId());
+        } catch (Exception $e) {
+            $this->getModel()->log('error',
+                'Payment '.$notification->getObject()->getId().' not fetched from API in capture method');
+
+            return false;
+        }
+
+        if ($notification->getEvent() === NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE) {
+            if ($payment->getPaymentMethod()->getType() === PaymentMethodType::BANK_CARD) {
+                $comment = sprintf($this->language->get('captures_new_hold_payment'), $payment->getExpiresAt()->format('d.m.Y H:i'));
+                $this->getModel()->log('info', $comment);
+                $this->model_checkout_order->update($orderId, $paymentMethod->getHoldOrderStatusId(), $comment);
+
+                exit();
+            } elseif ($this->getModel()->capturePayment($paymentMethod, $payment)) {
                 exit();
             }
-        } else {
-            $this->getModel()->log('error', 'Order for payment ' . $notification->getObject()->getId() . ' not exists');
-            header('HTTP/1.1 404 Order not exists');
-            exit();
         }
+        if ($notification->getEvent() === NotificationEventType::PAYMENT_SUCCEEDED) {
+            if ($payment->getStatus() === PaymentStatus::SUCCEEDED) {
+                $this->getModel()->confirmOrderPayment($orderId, $payment, $paymentMethod->getOrderStatusId());
+                $this->getModel()->log('info', 'Платёж для заказа №'.$orderId.' подтверждён');
+                exit();
+            }
+        }
+        header('HTTP/1.1 500 Internal server error');
+        exit();
     }
 
     /**
@@ -271,7 +280,6 @@ class ControllerPaymentYaMoney extends Controller
             return;
         }
         $callbackParams = $_POST;
-        $notify = false;
         if (isset($callbackParams["label"])) {
             $orderId = $callbackParams["label"];
         } else {
@@ -294,8 +302,7 @@ class ControllerPaymentYaMoney extends Controller
                     $this->model_checkout_order->confirm(
                         $orderId,
                         $this->config->get('ya_newStatus'),
-                        $sender . " Сумма: " . $callbackParams['withdraw_amount'],
-                        $notify
+                        $sender . " Сумма: " . $callbackParams['withdraw_amount']
                     );
                 }
             }

@@ -37,3 +37,5 @@ $_['text_comment'] = 'Комментарий';
 $_['kassa_description_default_placeholder'] = 'Оплата заказа №%order_id%';
 
 $_['yamoney_pay_button_text'] = '<span>Заплатить</span>через Яндекс';
+
+$_['captures_new_hold_payment']= 'Поступил новый платёж. Он ожидает подтверждения до %1$s, после чего автоматически отменится';

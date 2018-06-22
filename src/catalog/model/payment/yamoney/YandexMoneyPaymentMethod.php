@@ -1,5 +1,7 @@
 <?php
 
+use YandexCheckout\Model\PaymentMethodType;
+
 class YandexMoneyPaymentMethod
 {
     /** @var int */
@@ -192,5 +194,42 @@ class YandexMoneyPaymentMethod
     public function checkConnection(array $options = null, $logger = null)
     {
         return true;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHoldModeEnable()
+    {
+        return (bool)$this->config->get('ya_kassa_enable_hold_mode');
+    }
+
+    /**
+     * @return int
+     */
+    public function getHoldOrderStatusId()
+    {
+        return (int)$this->config->get('ya_kassa_hold_order_status');
+    }
+
+    /**
+     * @return int
+     */
+    public function getCancelOrderStatusId()
+    {
+        return (int)$this->config->get('ya_kassa_cancel_order_status');
+    }
+
+    /**
+     * @param string $paymentMethod
+     * @return bool
+     */
+    public function getCaptureValue($paymentMethod)
+    {
+        if (!$this->isHoldModeEnable()) {
+            return true;
+        }
+
+        return !in_array($paymentMethod, array('', PaymentMethodType::BANK_CARD));
     }
 }

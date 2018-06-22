@@ -164,3 +164,31 @@ $_['mobile_balance_title'] = 'Баланс мобильного';
 $_['text_vat_none'] = 'без НДС';
 $_['text_vat_10'] = 'Расчетная ставка 10/110';
 $_['text_vat_18'] = 'Расчетная ставка 18/118';
+
+$_['kassa_hold_setting_label'] = 'Включить отложенную оплату';
+$_['kassa_hold_setting_description'] = 'Если опция включена, платежи с карт проходят в 2 этапа: у клиента сумма замораживается, и вам вручную нужно подтвердить её списание – через панель администратора.  <a href="https://kassa.yandex.ru/holdirovani.html" target="_blank">Подробное описание Холдирования.</a>';
+$_['kassa_hold_order_statuses_label'] = 'Какой статус присваивать заказу, если он:';
+$_['kassa_hold_order_status_label'] = 'ожидает подтверждения';
+$_['kassa_hold_order_status_help'] = 'заказ переходит в этот статус при поступлении и остается в нем пока оператор магазина не подтвердит или не отменит платеж';
+$_['kassa_cancel_order_status_label'] = 'отменен';
+$_['kassa_cancel_order_status_help'] = 'заказ переходит в этот статус после отмены платежа';
+$_['kassa_hold_capture_form_link'] = 'Подтверждение';
+
+$_['captures_title']          = 'Подтверждение платежа';
+$_['captures_new']            = 'Подтверждение платежа';
+$_['captures_expires_date']   = 'Подтвердить до';
+$_['captures_payment_data']   = 'Данные платежа';
+$_['captures_payment_id']     = 'Номер транзакции в Яндекс.Кассе';
+$_['captures_order_id']       = 'Номер заказа';
+$_['captures_payment_method'] = 'Способ оплаты';
+$_['captures_payment_sum']    = 'Сумма платежа';
+$_['captures_capture_data']   = '';
+$_['captures_capture_sum']    = 'Сумма подтверждения';
+$_['captures_capture_create'] = 'Подтвердить платеж';
+$_['captures_capture_cancel'] = 'Отменить платеж';
+$_['captures_captured']       = 'Платеж подтвержден';
+$_['captures_capture_success']= 'Вы подтвердили платёж в Яндекс.Кассе.';
+$_['captures_capture_fail']   = 'Платёж не подтвердился. Попробуйте ещё раз.';
+$_['captures_cancel_success'] = 'Вы отменили платёж в Яндекс.Кассе. Деньги вернутся клиенту.';
+$_['captures_cancel_fail']    = 'Платёж не отменился. Попробуйте ещё раз.';
+

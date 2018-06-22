@@ -21,7 +21,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.0.11';
+    private $moduleVersion = '1.0.12';
 
     /**
      * @var ModelPaymentYaMoney
@@ -372,6 +372,173 @@ class ControllerPaymentYaMoney extends Controller
         $this->response->setOutput($this->render());
     }
 
+    public function captureForm()
+    {
+        $this->language->load('sale/order');
+        $this->language->load('payment/yamoney');
+        $this->language->load('error/not_found');
+
+        $this->getModel()->init($this->config);
+        $this->getModel()->getPaymentMethods();
+        /** @var YandexMoneyPaymentKassa $kassa */
+        $kassa = $this->getModel()->getPaymentMethod(YandexMoneyPaymentMethod::MODE_KASSA);
+        if (!$kassa->isEnabled()) {
+            $url = $this->url->link('payment/yamoney', 'token='.$this->session->data['token'], true);
+            $this->redirect($url);
+        }
+
+        /** @var ModelSaleOrder $orderModel */
+        $this->load->model('sale/order');
+        $orderModel = $this->model_sale_order;
+
+        $orderId = $this->request->get['order_id'];
+        $order = $orderModel->getOrder($orderId);
+
+        try {
+            $payment = $this->getModel()->getPaymentByOrderId($kassa, $orderId);
+        } catch (Exception $exception) {
+            $this->getModel()->log('error', $exception->getMessage());
+            $this->children = array(
+                'common/header',
+                'common/footer',
+            );
+            $this->document->setTitle($this->language->get('captures_title'));
+            $this->data['heading_title'] = $this->language->get('captures_title');
+            $this->data['text_not_found'] = $this->language->get('text_not_found');
+            $this->data['breadcrumbs']= array();
+            $this->template = 'error/not_found.tpl';
+            $this->response->setOutput($this->render());
+            return;
+        }
+
+        $message = '';
+        if ($payment['status'] === \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE
+            && isset($this->request->post['action'])
+        ) {
+            $action = $this->request->post['action'];
+            if ($action === 'capture') {
+                $this->getModel()->log('info', 'Capture payment#'.$payment['payment_id']);
+                $order = $this->updateOrder($orderModel, $order);
+                if ($this->getModel()->capturePayment($kassa, $payment, $order)) {
+                    $payment = $this->getModel()->getPaymentByOrderId($kassa, $orderId);
+                    $message = $this->language->get('captures_capture_success');
+
+                    $order['notify']          = 0;
+                    $order['comment']         = $message;
+                    $order['order_status_id'] = $kassa->getOrderStatusId();
+                    $orderModel->addOrderHistory($orderId, $order);
+                } else {
+                    $message = $this->language->get('captures_capture_fail');
+                }
+            }
+            if ($action === 'cancel') {
+                $this->getModel()->log('info', 'Cancel payment#'.$payment['payment_id']);
+                if ($this->getModel()->cancelPayment($kassa, $payment)) {
+                    $payment = $this->getModel()->getPaymentByOrderId($kassa, $orderId);
+                    $message = $this->language->get('captures_cancel_success');
+
+                    $order['notify']          = 0;
+                    $order['comment']         = $message;
+                    $order['order_status_id'] = $kassa->getCancelOrderStatusId();
+                    $orderModel->addOrderHistory($orderId, $order);
+                } else {
+                    $message = $this->language->get('captures_cancel_fail');
+                }
+            }
+        }
+        if ($message) {
+            $this->getModel()->log('info', $message);
+        }
+
+
+        $this->document->setTitle($this->language->get('captures_title'));
+        $this->template = 'payment/yamoney/kassa_capture_form.tpl';
+        $this->children = array(
+            'common/header',
+            'common/footer',
+        );
+
+        $this->data['language']     = $this->language;
+        $this->data['order']        = $order;
+        $this->data['products']     = $orderModel->getOrderProducts($orderId);
+        $this->data['vouchers']     = $orderModel->getOrderVouchers($orderId);
+        $this->data['totals']       = $orderModel->getOrderTotals($orderId);
+        $this->data['payment']      = $payment;
+        $this->data['message']      = $message;
+        $this->data['breadcrumbs']  = array(
+            array(
+                'name' => $this->language->get('captures_title'),
+                'link' => $this->url->link('payment/yamoney/captureForm', 'token='.$this->session->data['token'].'&order_id='.$orderId, true),
+            ),
+        );
+        $this->data['capture_action'] = $this->url->link(
+            'payment/yamoney/captureForm',
+            'token='.$this->session->data['token'].'&order_id='.$orderId,
+            'SSL'
+        );
+        $this->data['cancel_link'] = $this->url->link(
+            'payment/yamoney/captureForm',
+            'token='.$this->session->data['token'].'&order_id='.$orderId.'&cancel_payment=yes',
+            'SSL'
+        );
+        $this->data['capture_form_route'] = 'payment/yamoney/captureForm';
+        $this->data['capture_form_token'] = $this->session->data['token'];
+        $this->data['capture_form_order_id'] = $orderId;
+        $this->data['is_waiting_for_capture'] = $payment->getStatus() === \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE;
+
+        $this->response->setOutput($this->render());
+    }
+
+    /**
+     * @param ModelSaleOrder $orderModel
+     * @param array $order
+     * @return array
+     */
+    private function updateOrder($orderModel, $order)
+    {
+        $quantity = $this->request->post['quantity'];
+        $totals = $this->request->post['totals'];
+
+        $products = $orderModel->getOrderProducts($order['order_id']);
+        foreach ($products as $index => $product) {
+            if ($quantity[$product['product_id']] == "0") {
+                unset($products[$index]);
+                continue;
+            }
+            $products[$index]['quantity'] = $quantity[$product['product_id']];
+            $products[$index]['total'] = $products[$index]['price'] * $products[$index]['quantity'];
+            $products[$index]['order_option'] = $orderModel->getOrderOptions(
+                $order['order_id'],
+                $product['order_product_id']
+            );
+            $products[$index]['order_download'] = $orderModel->getOrderDownloads(
+                $order['order_id'],
+                $product['order_product_id']
+            );
+        }
+        $order['order_product'] = array_values($products);
+        $order['order_voucher'] = $orderModel->getOrderVouchers($order['order_id']);
+        $order['order_total']   = $orderModel->getOrderTotals($order['order_id']);
+
+        foreach ($order['order_total'] as $index => $total) {
+            if (!isset($totals[$total['code']])) {
+                continue;
+            }
+            $order['order_total'][$index]['value'] = $totals[$total['code']];
+            $order['order_total'][$index]['text'] = $this->currency->format($totals[$total['code']]);
+        }
+        $maxTotal = end($order['order_total']);
+        $order['total'] = $maxTotal['value'];
+
+        $orderModel->editOrder($order['order_id'], $order);
+
+        return $order;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
     private function validate($data)
     {
         $this->language->load('payment/yamoney');
