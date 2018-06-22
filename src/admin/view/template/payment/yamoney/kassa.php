@@ -155,6 +155,54 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label class="control-label col-sm-3" for="ya_kassa_enable_hold_mode"><?= $lang->get('kassa_hold_setting_label'); ?></label>
+                    <div class="col-sm-8">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="ya_kassa_enable_hold_mode" id="ya_kassa_enable_hold_mode"
+                                       value="1" <?= $kassa->isHoldModeEnable() ? 'checked' : ''; ?> />
+                                <?= $lang->get('kassa_hold_setting_description'); ?>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="with-hold-only col-sm-offset-3">
+                    <div style="margin: 0 0 10px 27px;">
+                        <label><?php echo $lang->get('kassa_hold_order_statuses_label'); ?></label>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-3"
+                               for="ya_kassa_hold_order_status"><?php echo $lang->get('kassa_hold_order_status_label'); ?></label>
+                        <div class="col-sm-7">
+                            <select name="ya_kassa_hold_order_status" id="ya_kassa_hold_order_status"
+                                    class="form-control" data-toggle="tooltip" data-placement="left" title="">
+                                <?php foreach ($orderStatusList as $id => $status): ?>
+                                    <option value="<?php echo $id; ?>"<?= $id == $kassa->getHoldOrderStatusId() ? ' selected="selected"' : ''; ?>><?= htmlspecialchars($status); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="help-block">
+                                <?= $lang->get('kassa_hold_order_status_help'); ?>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-3"
+                               for="ya_kassa_cancel_order_status"><?php echo $lang->get('kassa_cancel_order_status_label'); ?></label>
+                        <div class="col-sm-7">
+                            <select name="ya_kassa_cancel_order_status" id="ya_kassa_cancel_order_status"
+                                    class="form-control" data-toggle="tooltip" data-placement="left" title="">
+                                <?php foreach ($orderStatusList as $id => $status): ?>
+                                    <option value="<?php echo $id; ?>"<?= $id == $kassa->getCancelOrderStatusId() ? ' selected="selected"' : ''; ?>><?= htmlspecialchars($status); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="help-block">
+                                <?= $lang->get('kassa_cancel_order_status_help'); ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 54-ФЗ -->
                 <div class="form-group">
                     <label class="col-sm-3 control-label"><?php echo $lang->get('kassa_send_receipt_label'); ?></label>
@@ -173,7 +221,7 @@
                 </div>
                 <div class="form-group select54Law">
                     <label class="col-sm-3 control-label"><?php echo $lang->get('kassa_all_tax_rate_label'); ?></label>
-                    <div class="col-sm-9">
+                    <div class="col-sm-8">
                         <p style="padding-top: 8px;"><b><?php echo $lang->get('kassa_default_tax_rate_label'); ?></b></p>
                         <select name="ya_kassa_receipt_tax_id[default]" class="form-control" data-toggle="tooltip" data-placement="left" title="">
                             <?php foreach ($kassa_taxes as $tax_id => $tax_name) : ?>
@@ -186,7 +234,7 @@
                         </select>
                         <p><?php echo $lang->get('kassa_default_tax_rate_description'); ?></p>
                     </div>
-                    <div class="col-sm-9 col-sm-offset-3">
+                    <div class="col-sm-8 col-sm-offset-3">
                         <p style="padding-top: 15px;"><b><?php echo $lang->get('kassa_tax_rate_description'); ?></b></p>
                         <table class="table table-hover">
                             <thead>
@@ -256,12 +304,14 @@
                         <p class="help-block"><a href="<?php echo $kassa_logs_link; ?>"><?php echo $lang->get('kassa_view_logs'); ?></a></p>
                     </div>
                 </div>
+                <!--
                 <div class="form-group">
                     <label class="col-sm-3 control-label">Список платежей через модуль Кассы</label>
                     <div class="col-sm-9">
                         <p class="help-block"><a href="<?php echo $kassa_payments_link; ?>">Открыть список</a></p>
                     </div>
                 </div>
+                -->
                 <div class="form-group">
                     <div class="col-sm-3 control-label"><strong><?php echo $lang->get('kassa_before_redirect_label'); ?></strong></div>
                     <div class="col-sm-8">
@@ -358,6 +408,16 @@ jQuery(document).ready(function() {
         triggerReceipt(this.value);
     });
     triggerReceipt(getRadioValue(sendReceipt));
+
+    function triggerEnableHold() {
+        if ($('#ya_kassa_enable_hold_mode').prop("checked")) {
+            $('.with-hold-only').slideDown();
+        } else {
+            $('.with-hold-only').slideUp();
+        }
+    }
+    $('#ya_kassa_enable_hold_mode').on('change', triggerEnableHold);
+    triggerEnableHold();
 });
 
 </script>

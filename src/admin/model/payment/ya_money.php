@@ -1,6 +1,7 @@
 <?php
 
 use YandexCheckout\Client;
+use YandexCheckout\Request\Payments\Payment\CreateCaptureRequestBuilder;
 
 class ModelPaymentYaMoney extends Model
 {
@@ -484,42 +485,23 @@ class ModelPaymentYaMoney extends Model
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param \YandexCheckout\Model\PaymentInterface $payment
-     * @param bool $fetchPayment
+     * @param $order
      * @return bool
      */
-    public function capturePayment(YandexMoneyPaymentKassa $paymentMethod, $payment, $fetchPayment = true)
+    public function capturePayment(YandexMoneyPaymentKassa $paymentMethod, $payment, $order)
     {
-        if ($fetchPayment) {
-            $client = $this->getClient($paymentMethod);
-            try {
-                $payment = $client->getPaymentInfo($payment->getId());
-            } catch (Exception $e) {
-                $this->log('error', 'Payment ' . $payment->getId() . ' not fetched from API in capture method');
-                return false;
-            }
-        }
-
-        if ($payment->getStatus() !== \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
-            return $payment->getStatus() === \YandexCheckout\Model\PaymentStatus::SUCCEEDED;
-        }
-
         $client = $this->getClient($paymentMethod);
         try {
             $builder = \YandexCheckout\Request\Payments\Payment\CreateCaptureRequest::builder();
-            $builder->setAmount($payment->getAmount());
-            $key = uniqid('', true);
-            $tries = 0;
+            $amount  = $this->currency->format($order['total'], 'RUB', '', false);
+            $builder->setAmount($amount);
+            $this->setReceiptItems($builder, $order);
             $request = $builder->build();
-            do {
-                $result = $client->capturePayment($request, $payment->getId(), $key);
-                if ($result === null) {
-                    $tries++;
-                    if ($tries > 3) {
-                        break;
-                    }
-                    sleep(2);
-                }
-            } while ($result === null);
+            $receipt = $request->getReceipt();
+            if ($receipt instanceof \YandexCheckout\Model\Receipt) {
+                $receipt->normalize($request->getAmount());
+            }
+            $result = $client->capturePayment($request, $payment->getId());
             if ($result === null) {
                 throw new RuntimeException('Failed to capture payment after 3 retries');
             }
@@ -531,6 +513,43 @@ class ModelPaymentYaMoney extends Model
             return false;
         }
         return true;
+    }
+
+    /**
+     * @param YandexMoneyPaymentKassa $paymentMethod
+     * @param \YandexCheckout\Model\PaymentInterface $payment
+     * @return bool
+     */
+    public function cancelPayment(YandexMoneyPaymentKassa $paymentMethod, $payment)
+    {
+        $client = $this->getClient($paymentMethod);
+        try {
+            $result = $client->cancelPayment($payment->getId());
+            if ($result === null) {
+                throw new RuntimeException('Failed to capture payment after 3 retries');
+            }
+            if ($result->getStatus() !== $payment->getStatus()) {
+                $this->updatePaymentStatus($payment->getId(), $result->getStatus(), $result->getCapturedAt());
+            }
+        } catch (Exception $e) {
+            $this->log('error', 'Failed to cancel payment: ' . $e->getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    public function getPaymentByOrderId(YandexMoneyPaymentKassa $paymentMethod, $orderId)
+    {
+        $sql     = 'SELECT * FROM `'.DB_PREFIX.'ya_money_payment` WHERE `order_id` = '.(int)$orderId;
+        $dataSet = $this->db->query($sql);
+        if (empty($dataSet->num_rows)) {
+            return null;
+        }
+        $paymentId = $dataSet->row['payment_id'];
+
+        $client = $this->getClient($paymentMethod);
+
+        return $client->getPaymentInfo($paymentId);
     }
 
     /**
@@ -558,5 +577,58 @@ class ModelPaymentYaMoney extends Model
         }
         $sql .= ' WHERE `payment_id`=\'' . $paymentId . '\'';
         $this->db->query($sql);
+    }
+
+
+    /**
+     * @param CreateCaptureRequestBuilder $builder
+     * @param $order
+     */
+    private function setReceiptItems(CreateCaptureRequestBuilder $builder, $order)
+    {
+        $this->load->model('catalog/product');
+
+        if (isset($order['email'])) {
+            $builder->setReceiptEmail($order['email']);
+        } elseif (isset($order['phone'])) {
+            $builder->setReceiptPhone($order['phone']);
+        }
+        $taxRates = $this->config->get('ya_kassa_receipt_tax_id');
+
+        $orderProducts = $this->model_sale_order->getOrderProducts($order['order_id']);
+        foreach ($orderProducts as $prod) {
+            $productInfo = $this->model_catalog_product->getProduct($prod['product_id']);
+            $price       = $this->currency->format($prod['price'], 'RUB', '', false);
+            if (isset($productInfo['tax_class_id'])) {
+                $taxId = $productInfo['tax_class_id'];
+                if (isset($taxRates[$taxId])) {
+                    $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates[$taxId]);
+                } else {
+                    $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates['default']);
+                }
+            } else {
+                $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates['default']);
+            }
+        }
+
+        $order_totals = $this->model_sale_order->getOrderTotals($order['order_id']);
+        foreach ($order_totals as $total) {
+            if ($total['value'] == 0.0){
+                continue;
+            }
+            if (isset($total['code']) && $total['code'] === 'shipping') {
+                $price = $this->currency->format($total['value'], 'RUB', '', false);
+                if (isset($total['tax_class_id'])) {
+                    $taxId = $total['tax_class_id'];
+                    if (isset($taxRates[$taxId])) {
+                        $builder->addReceiptShipping($total['title'], $price, $taxRates[$taxId]);
+                    } else {
+                        $builder->addReceiptShipping($total['title'], $price, $taxRates['default']);
+                    }
+                } else {
+                    $builder->addReceiptShipping($total['title'], $price, $taxRates['default']);
+                }
+            }
+        }
     }
 }

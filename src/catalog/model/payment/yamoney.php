@@ -2,6 +2,7 @@
 
 use YandexCheckout\Client;
 use YandexCheckout\Model\Payment;
+use YandexCheckout\Request\Payments\CreatePaymentRequestBuilder;
 
 require_once dirname(__FILE__).'/yamoney/autoload.php';
 
@@ -150,26 +151,26 @@ class ModelPaymentYaMoney extends Model
     {
         $client = $this->getClient($paymentMethod);
 
+        $paymentType =  !empty($_GET['paymentType']) ? $_GET['paymentType'] : '';
+
         try {
             $builder = \YandexCheckout\Request\Payments\CreatePaymentRequest::builder();
             $amount  = $this->currency->format($orderInfo['total'], 'RUB', '', false);
 
             $builder->setAmount($amount)
                     ->setCurrency('RUB')
-                    ->setCapture(true)
+                    ->setCapture($paymentMethod->getCaptureValue($paymentType))
                     ->setDescription($this->createDescription($orderInfo))
                     ->setClientIp($_SERVER['REMOTE_ADDR'])
                     ->setSavePaymentMethod(false)
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.0.11',
+                        'module_version' => '1.0.12',
                     ));
             if ($paymentMethod->getSendReceipt()) {
-                $taxRates = $this->config->get('ya_kassa_receipt_tax_id');
                 $this->setReceiptItems($builder, $orderInfo);
             }
-            $paymentType  = null;
             $confirmation = array(
                 'type'      => \YandexCheckout\Model\ConfirmationType::REDIRECT,
                 'returnUrl' => str_replace(
@@ -178,8 +179,8 @@ class ModelPaymentYaMoney extends Model
                     $this->url->link('payment/yamoney/confirm', 'order_id='.$orderInfo['order_id'], true)
                 ),
             );
-            if (!empty($_GET['paymentType'])) {
-                $paymentType = $_GET['paymentType'];
+
+            if ($paymentType) {
                 if ($paymentType === \YandexCheckout\Model\PaymentMethodType::QIWI) {
                     $paymentType = array(
                         'type'  => $paymentType,
@@ -192,8 +193,6 @@ class ModelPaymentYaMoney extends Model
                     );
                     $confirmation = \YandexCheckout\Model\ConfirmationType::EXTERNAL;
                 }
-            }
-            if ($paymentType !== null) {
                 $builder->setPaymentMethodData($paymentType);
             }
             $builder->setConfirmation($confirmation);
@@ -209,9 +208,8 @@ class ModelPaymentYaMoney extends Model
             return null;
         }
 
-        $key = uniqid('', true);
         try {
-            $paymentInfo = $client->createPayment($request, $key);
+            $paymentInfo = $client->createPayment($request);
             $this->insertPayment($orderInfo['order_id'], $paymentInfo, $amount);
         } catch (\Exception $e) {
             $this->log('error', 'API error: '.$e->getMessage());
@@ -288,7 +286,7 @@ class ModelPaymentYaMoney extends Model
         return (int)$dataSet->row['order_id'];
     }
 
-    public function getOrderPayment(YandexMoneyPaymentKassa $paymentMethod, $orderId)
+    public function getPaymentByOrderId(YandexMoneyPaymentKassa $paymentMethod, $orderId)
     {
         $sql     = 'SELECT * FROM `'.DB_PREFIX.'ya_money_payment` WHERE `order_id` = '.(int)$orderId;
         $dataSet = $this->db->query($sql);
@@ -347,7 +345,12 @@ class ModelPaymentYaMoney extends Model
         );
     }
 
-    private function setReceiptItems(\YandexCheckout\Request\Payments\CreatePaymentRequestBuilder $builder, $orderInfo)
+    /**
+     * @param CreatePaymentRequestBuilder $builder
+     * @param $orderInfo
+     * @return CreatePaymentRequestBuilder
+     */
+    private function setReceiptItems(CreatePaymentRequestBuilder $builder, $orderInfo)
     {
         $this->load->model('account/order');
         $this->load->model('catalog/product');
@@ -398,23 +401,11 @@ class ModelPaymentYaMoney extends Model
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param \YandexCheckout\Model\PaymentInterface $payment
-     * @param bool $fetchPayment
      *
      * @return bool
      */
-    public function capturePayment(YandexMoneyPaymentKassa $paymentMethod, $payment, $fetchPayment = true)
+    public function capturePayment(YandexMoneyPaymentKassa $paymentMethod, $payment)
     {
-        if ($fetchPayment) {
-            $client = $this->getClient($paymentMethod);
-            try {
-                $payment = $client->getPaymentInfo($payment->getId());
-            } catch (Exception $e) {
-                $this->log('error', 'Payment '.$payment->getId().' not fetched from API in capture method');
-
-                return false;
-            }
-        }
-
         if ($payment->getStatus() !== \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
             return $payment->getStatus() === \YandexCheckout\Model\PaymentStatus::SUCCEEDED;
         }
@@ -423,12 +414,8 @@ class ModelPaymentYaMoney extends Model
         try {
             $builder = \YandexCheckout\Request\Payments\Payment\CreateCaptureRequest::builder();
             $builder->setAmount($payment->getAmount());
-            $key     = uniqid('', true);
             $request = $builder->build();
-            $result = $client->capturePayment($request, $payment->getId(), $key);
-            if ($result === null) {
-                throw new RuntimeException('Failed to capture payment after 3 retries');
-            }
+            $client->capturePayment($request, $payment->getId());
         } catch (Exception $e) {
             $this->log('error', 'Failed to capture payment: '.$e->getMessage());
 
@@ -450,7 +437,7 @@ class ModelPaymentYaMoney extends Model
         $comment = 'Номер транзакции: '.$payment->getId().'. Сумма: '.$payment->getAmount()->getValue()
                    .' '.$payment->getAmount()->getCurrency();
         $this->load->model('checkout/order');
-        $this->model_checkout_order->update($orderId, $statusId, $comment, true);
+        $this->model_checkout_order->update($orderId, $statusId, $comment);
         $this->db->query($sql);
     }
 
@@ -514,6 +501,9 @@ class ModelPaymentYaMoney extends Model
         $sql = 'UPDATE `'.DB_PREFIX.'ya_money_payment` SET `status` = \''.$status.'\'';
         if ($capturedAt !== null) {
             $sql .= ', `captured_at`=\''.$capturedAt->format('Y-m-d H:i:s').'\'';
+        }
+        if ($status !== \YandexCheckout\Model\PaymentStatus::CANCELED && $status !== \YandexCheckout\Model\PaymentStatus::PENDING) {
+            $sql .= ', `paid`=\'Y\'';
         }
         $sql .= ' WHERE `payment_id`=\''.$paymentId.'\'';
         $this->db->query($sql);

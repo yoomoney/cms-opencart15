@@ -34,3 +34,5 @@ $_['text_comment'] = 'Comment';
 $_['kassa_description_default_placeholder'] = 'Payment for order No. %order_id%';
 
 $_['yamoney_pay_button_text'] = '<span>Pay</span>with Yandex';
+
+$_['captures_new_hold_payment']= 'Поступил новый платёж. Он ожидает подтверждения до %1$s, после чего автоматически отменится';

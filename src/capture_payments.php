@@ -165,7 +165,7 @@ if (!empty($payments)) {
                     } elseif ($orderInfo['order_status_id'] <= 0) {
                         $link = $registry->get('url')->link('payment/yamoney/repay', 'order_id=' . $orderId, true);
                         $anchor = '<a href="' . $link . '" class="button">Оплатить</a>';
-                        $orderModel->confirm($orderId, 1, $anchor, true);
+                        $orderModel->confirm($orderId, 1, $anchor);
                     }
                     $model->confirmOrderPayment($orderId, $payment, $kassa->getOrderStatusId());
                     $model->log('info', 'Платёж для заказа №' . $orderId . ' подтверждён');

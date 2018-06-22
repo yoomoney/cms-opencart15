@@ -5,6 +5,30 @@
     <vqmver required="true">2.6.0</vqmver>
     <author>Yandex.Money</author>
 
+
+    <file name="admin/controller/sale/order.php" error="skip">
+        <operation error="skip" info="Add Capture Link">
+            <search position="after"><![CDATA[$action = array();]]></search>
+            <add><![CDATA[
+            $ya_kassa_hold_order_status = $this->config->get('ya_kassa_hold_order_status');
+            $this->load->model('localisation/order_status');
+            $this->language->load('payment/yamoney');
+            foreach($this->model_localisation_order_status->getOrderStatuses() as $order_status) {
+                if ($order_status['name'] !== $result['status']) {
+                    continue;
+                }
+                if ($order_status['order_status_id'] !== $ya_kassa_hold_order_status) {
+                    continue;
+                }
+                $action[] = array(
+                    'text' => $this->language->get('kassa_hold_capture_form_link'),
+                    'href' => $this->url->link('payment/yamoney/captureForm', 'token=' . $this->session->data['token'] . '&order_id=' . $result['order_id'] . $url, 'SSL')
+                );
+            }
+            ]]></add>
+        </operation>
+    </file>
+
     <file name="catalog/controller/product/product.php" error="skip">
         <operation error="skip" info="Add Credit info flag">
             <search position="replace"><![CDATA[$product_info = $this->model_catalog_product->getProduct($product_id);]]></search>
