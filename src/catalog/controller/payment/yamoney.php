@@ -248,7 +248,9 @@ class ControllerPaymentYaMoney extends Controller
             return false;
         }
 
-        if ($notification->getEvent() === NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE) {
+        if ($notification->getEvent() === NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE
+            && $payment->getStatus() === PaymentStatus::WAITING_FOR_CAPTURE
+        ) {
             if ($payment->getPaymentMethod()->getType() === PaymentMethodType::BANK_CARD) {
                 $comment = sprintf($this->language->get('captures_new_hold_payment'), $payment->getExpiresAt()->format('d.m.Y H:i'));
                 $this->getModel()->log('info', $comment);
