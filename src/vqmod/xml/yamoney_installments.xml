@@ -68,23 +68,22 @@
                 <?php endif;?>
             ]]></add>
         </operation>
-    </file>
-
-    <file name="catalog/view/theme/*/template/product/product.tpl" error="skip">
         <operation error="skip" info="Add Credit UI">
             <search position="before"><![CDATA[<?php echo $footer; ?>]]></search>
             <add><![CDATA[
                 <script>
-                    const $yamoneyCheckoutCreditUI = YandexCheckoutCreditUI({
-                        shopId: '<?php echo $yamoney_shop_id;?>',
-                        sum: '<?php echo round($yamoney_credit_price, 2);?>',
-                        language: '<?php echo $yamoney_language_code;?>'
-                    });
+                    if (typeof YandexCheckoutCreditUI !== "undefined") {
+                        const $yamoneyCheckoutCreditUI = YandexCheckoutCreditUI({
+                            shopId: '<?php echo $yamoney_shop_id;?>',
+                            sum: '<?php echo round($yamoney_credit_price, 2);?>',
+                            language: '<?php echo $yamoney_language_code;?>'
+                        });
 
-                    const yamoneyCheckoutCreditButton = $yamoneyCheckoutCreditUI({
-                        type: 'info',
-                        domSelector: '.installments-info'
-                    });
+                        const yamoneyCheckoutCreditButton = $yamoneyCheckoutCreditUI({
+                            type: 'info',
+                            domSelector: '.installments-info'
+                        });
+                    }
                 </script>
             ]]></add>
         </operation>

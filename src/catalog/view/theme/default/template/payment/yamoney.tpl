@@ -184,32 +184,34 @@ jQuery(document).ready(function () {
     const ym_installments_total_amount = <?=$sum;?>;
     <?php if ($paymentMethod->getEPL()) : ?>
         <?php if ($paymentMethod->isAddInstallmentsButton()) { ?>
-    const checkoutCreditUI = YandexCheckoutCreditUI({
-        shopId: ym_installments_shop_id,
-        sum: ym_installments_total_amount,
-        language: "<?=$paymentMethod->i18n('language_code');?>"
-    });
-    const checkoutCreditButton = checkoutCreditUI({type: 'button', domSelector: '.ya_kassa_installments_button_container'});
-    checkoutCreditButton.on('click', function () {
-        jQuery.ajax({
-            url: "<?php echo $validate_url; ?>",
-            dataType: "json",
-            method: "GET",
-            data: {
-                paymentType: "installments",
-            },
-            success: function (data) {
-                if (data.success) {
-                    document.location = data.redirect;
-                } else {
-                    onValidateError(data.error);
-                }
-            },
-            failure: function () {
-                onValidateError("Failed to create payment");
-            }
-        });
-    });
+        if  (typeof YandexCheckoutCreditUI !== "undefined") {
+            const checkoutCreditUI = YandexCheckoutCreditUI({
+                shopId: ym_installments_shop_id,
+                sum: ym_installments_total_amount,
+                language: "<?=$paymentMethod->i18n('language_code');?>"
+            });
+            const checkoutCreditButton = checkoutCreditUI({type: 'button', domSelector: '.ya_kassa_installments_button_container'});
+            checkoutCreditButton.on('click', function () {
+                jQuery.ajax({
+                    url: "<?php echo $validate_url; ?>",
+                    dataType: "json",
+                    method: "GET",
+                    data: {
+                        paymentType: "installments",
+                    },
+                    success: function (data) {
+                        if (data.success) {
+                            document.location = data.redirect;
+                        } else {
+                            onValidateError(data.error);
+                        }
+                    },
+                    failure: function () {
+                        onValidateError("Failed to create payment");
+                    }
+                });
+            });
+        }
     <?php } ?>
 
     <?php else : ?>
