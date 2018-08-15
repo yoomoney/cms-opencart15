@@ -6,6 +6,8 @@
 
 ### Требования к CMS OpenCart:
 * версия 1.5.4 - 1.5.6;
+* PHP 5.4 или выше
+* cURL
 * [vQmod для Opencart](https://github.com/vqmod/vqmod/wiki/Installing-vQmod-on-OpenCart)
 
 ### Совместимость с CMS Opencart 2.1.x - 2.2.x
