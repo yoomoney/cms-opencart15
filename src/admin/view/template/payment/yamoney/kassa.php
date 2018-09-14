@@ -78,6 +78,13 @@
                                 <?php echo $lang->get('kassa_add_installments_button'); ?>
                             </label>
                         </div>
+                        <div class="checkbox" style="padding: 0 0 0 20px;">
+                            <label class="radio-inline control-label">
+                                <input type="checkbox" name="ya_kassa_add_installments_block"
+                                       value="1"<?php echo $kassa->getAddInstallmentsBlock() ? ' checked="checked"' : ''; ?> />
+                                <?php echo $lang->get('kassa_add_installments_block_label'); ?>
+                            </label>
+                        </div>
                     </div>
                     <div class="col-sm-9 col-sm-offset-3">
                     <?php else: ?>
@@ -103,6 +110,13 @@
                                 </label>
                             </div>
                         <?php endforeach; ?>
+                        <div class="checkbox" style="padding: 0 0 0 20px;">
+                            <label class="radio-inline control-label">
+                                <input type="checkbox" name="ya_kassa_add_installments_block"
+                                       value="1"<?php echo $kassa->getAddInstallmentsBlock() ? ' checked="checked"' : ''; ?> />
+                                <?php echo $lang->get('kassa_add_installments_block_label'); ?>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -418,6 +432,13 @@ jQuery(document).ready(function() {
     }
     $('#ya_kassa_enable_hold_mode').on('change', triggerEnableHold);
     triggerEnableHold();
+
+    $('input[name=ya_kassa_add_installments_block]').on('change', function () {
+        var checked = this.checked;
+        $('input[name=ya_kassa_add_installments_block]').each(function() {
+            this.checked = checked;
+        });
+    });
 });
 
 </script>

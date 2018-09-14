@@ -38,6 +38,7 @@ $_['kassa_payment_mode_smart_pay'] = 'На стороне Кассы';
 $_['kassa_payment_mode_shop_pay'] = 'На стороне магазина';
 $_['kassa_force_button_name'] = 'Назвать кнопку оплаты «Заплатить через Яндекс»';
 $_['kassa_add_installments_button'] = 'Добавить кнопку «Заплатить по частям» на страницу оформления заказа';
+$_['kassa_add_installments_block_label'] = 'Добавить блок «Заплатить по частям» в карточки товаров';
 $_['kassa_payment_mode_help'] = "<a href='https://tech.yandex.ru/money/doc/payment-solution/payment-form/payment-form-docpage/' target='_blank'>Подробнее о сценариях оплаты</a>";
 $_['kassa_payment_method_label'] = "Отметьте способы оплаты, которые указаны в вашем договоре с Яндекс.Деньгами";
 $_['forwork_money'] = "";
