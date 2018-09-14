@@ -29,7 +29,7 @@
     <input type="hidden" name="paymentType" value="">
 <?php endif; ?>
 
-<input type="hidden" name="receiver" value="<?php echo htmlspecialchars($paymentMethod->getShopId()); ?>" />
+<input type="hidden" name="receiver" value="<?php echo htmlspecialchars($account); ?>" />
 <input type="hidden" name="formcomment" value="<?php echo htmlspecialchars($formcomment);?>" />
 <input type="hidden" name="short-dest" value="<?php echo htmlspecialchars($short_dest);?>" />
 <input type="hidden" name="writable-targets" value="false" />
@@ -40,7 +40,7 @@
 <input type="hidden" name="targets" value="<?php echo htmlspecialchars($order_text) ;?> <?php echo htmlspecialchars($order_id);?>" />
 <input type="hidden" name="sum" value="<?php echo htmlspecialchars($sum); ?>" data-type="number" />
 <input type="hidden" name="comment" value="<?php echo htmlspecialchars($comment); ?>" />
-<input type="hidden" name="need-fio" value="true" />
-<input type="hidden" name="need-email" value="true" />
+<input type="hidden" name="need-fio" value="false" />
+<input type="hidden" name="need-email" value="false" />
 <input type="hidden" name="need-phone" value="false" />
 <input type="hidden" name="need-address" value="false" />

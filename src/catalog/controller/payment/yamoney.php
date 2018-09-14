@@ -49,7 +49,7 @@ class ControllerPaymentYaMoney extends Controller
             $this->jsonError('Корзина пуста');
         }
         $this->language->load('payment/yamoney');
-        $this->getModel()->log('info', 'Создание платежа для заказа №' . $orderInfo['order_id']);
+        $this->getModel()->log('info', 'Создание платежа для заказа №'.$orderInfo['order_id']);
         /** @var YandexMoneyPaymentKassa $paymentMethod */
         $paymentMethod = $this->getModel()->getPaymentMethod($this->config->get('ya_mode'));
         if (!$paymentMethod->isModeKassa()) {
@@ -87,8 +87,8 @@ class ControllerPaymentYaMoney extends Controller
             $this->jsonError('Платеж не прошел. Попробуйте еще или выберите другой способ оплаты');
         }
         $result = array(
-            'success' => true,
-            'redirect' => $this->url->link('payment/yamoney/confirm', 'order_id=' . $orderInfo['order_id'], 'SSL'),
+            'success'  => true,
+            'redirect' => $this->url->link('payment/yamoney/confirm', 'order_id='.$orderInfo['order_id'], 'SSL'),
         );
         /** @var \YandexCheckout\Model\Confirmation\ConfirmationRedirect $confirmation */
         $confirmation = $payment->getConfirmation();
@@ -125,18 +125,18 @@ class ControllerPaymentYaMoney extends Controller
             $this->language->load('payment/yamoney');
             $orderId = (int)$_GET['order_id'];
             if ($orderId <= 0) {
-                $this->errorRedirect('Invalid order id in return link: ' . json_encode($_GET['order_id']));
+                $this->errorRedirect('Invalid order id in return link: '.json_encode($_GET['order_id']));
             }
 
-            $this->getModel()->log('info', 'Возврат пользователя из кассы для заказа №' . $orderId);
+            $this->getModel()->log('info', 'Возврат пользователя из кассы для заказа №'.$orderId);
             $payment = $this->getModel()->getPaymentByOrderId($paymentMethod, $orderId);
             if ($payment === null) {
                 $this->redirect($this->url->link('checkout/checkout', '', true));
             } elseif ($payment->getStatus() === \YandexCheckout\Model\PaymentStatus::CANCELED) {
-                $pageId = $this->config->get('ya_kassa_page_failure');
+                $pageId      = $this->config->get('ya_kassa_page_failure');
                 $redirectUrl = (empty($pageId) || $pageId < 0)
                     ? $this->url->link('checkout/checkout', '', true)
-                    : $this->url->link('information/information', 'information_id=' . $pageId, 'SSL');
+                    : $this->url->link('information/information', 'information_id='.$pageId, 'SSL');
                 $this->redirect($redirectUrl);
             } elseif (!$payment->getPaid()) {
                 $this->redirect($this->url->link('checkout/checkout', '', true));
@@ -148,8 +148,8 @@ class ControllerPaymentYaMoney extends Controller
                 $this->cart->clear();
             }
             $redirectUrl = (empty($pageId) || $pageId < 0)
-                ? $this->url->link('checkout/success', 'order_id=' . $orderId, 'SSL')
-                : $this->url->link('information/information', 'information_id=' . $pageId, 'SSL');
+                ? $this->url->link('checkout/success', 'order_id='.$orderId, 'SSL')
+                : $this->url->link('information/information', 'information_id='.$pageId, 'SSL');
 
             $this->redirect($redirectUrl);
 
@@ -181,7 +181,7 @@ class ControllerPaymentYaMoney extends Controller
         $this->language->load('payment/yamoney');
         $data = file_get_contents('php://input');
         if (empty($data)) {
-            $log = 'Empty body in capture notification, get: ' . json_encode($_GET) . ', post: ' . json_encode($_POST);
+            $log = 'Empty body in capture notification, get: '.json_encode($_GET).', post: '.json_encode($_POST);
             $this->getModel()->log('error', $log);
             header('HTTP/1.1 400 Empty body in notification request');
             exit();
@@ -191,18 +191,19 @@ class ControllerPaymentYaMoney extends Controller
             if (json_last_error() === JSON_ERROR_NONE) {
                 $this->getModel()->log('error', 'Empty object in body in capture notification');
             } else {
-                $this->getModel()->log('error', 'Invalid body in capture notification ' . json_last_error_msg() . ' ' . $data);
+                $this->getModel()->log('error',
+                    'Invalid body in capture notification '.json_last_error_msg().' '.$data);
             }
             header('HTTP/1.1 400 Failed to parse body');
             exit();
         }
 
-        $this->getModel()->log('debug', 'Notification: ' . $data);
+        $this->getModel()->log('debug', 'Notification: '.$data);
 
         /** @var YandexMoneyPaymentKassa $paymentMethod */
         $paymentMethod = $this->getModel()->getPaymentMethod($this->config->get('ya_mode'));
         if (!$paymentMethod->isModeKassa()) {
-            $this->getModel()->log('warning', 'Invalid body in capture notification ' . json_last_error_msg() . ' ' . $data);
+            $this->getModel()->log('warning', 'Invalid body in capture notification '.json_last_error_msg().' '.$data);
             header('HTTP/1.1 405 Invalid order payment method');
             exit();
         }
@@ -212,28 +213,30 @@ class ControllerPaymentYaMoney extends Controller
                 ? new NotificationSucceeded($json)
                 : new NotificationWaitingForCapture($json);
         } catch (\Exception $e) {
-            $this->getModel()->log('error', 'Invalid notification object - ' . $e->getMessage());
+            $this->getModel()->log('error', 'Invalid notification object - '.$e->getMessage());
             header('HTTP/1.1 400 Invalid object in body');
+
             return;
         }
 
         $orderId = $this->getModel()->getOrderIdByPayment($notification->getObject());
         if ($orderId <= 0) {
-            $this->getModel()->log('warning', 'Order not exists in capture notification' . $orderId);
+            $this->getModel()->log('warning', 'Order not exists in capture notification'.$orderId);
             header('HTTP/1.1 404 Order not exists');
             exit();
         }
         $this->load->model('checkout/order');
         $orderInfo = $this->model_checkout_order->getOrder($orderId);
         if (empty($orderInfo)) {
-            $this->getModel()->log('warning', 'Empty order#' . $orderId . ' in notification');
+            $this->getModel()->log('warning', 'Empty order#'.$orderId.' in notification');
             header('HTTP/1.1 405 Invalid order payment method');
             exit();
         } elseif ($orderInfo['order_status_id'] <= 0) {
             $this->getModel()->confirmOrder($paymentMethod, $orderId);
         }
 
-        $this->getModel()->log('info', 'Пришла нотификация для платежа ' . $notification->getObject()->getId() . ' для заказа №' . $orderId);
+        $this->getModel()->log('info',
+            'Пришла нотификация для платежа '.$notification->getObject()->getId().' для заказа №'.$orderId);
 
         $client = new Client();
         $client->setAuth($paymentMethod->getShopId(), $paymentMethod->getPassword());
@@ -252,7 +255,8 @@ class ControllerPaymentYaMoney extends Controller
             && $payment->getStatus() === PaymentStatus::WAITING_FOR_CAPTURE
         ) {
             if ($payment->getPaymentMethod()->getType() === PaymentMethodType::BANK_CARD) {
-                $comment = sprintf($this->language->get('captures_new_hold_payment'), $payment->getExpiresAt()->format('d.m.Y H:i'));
+                $comment = sprintf($this->language->get('captures_new_hold_payment'),
+                    $payment->getExpiresAt()->format('d.m.Y H:i'));
                 $this->getModel()->log('info', $comment);
                 $this->model_checkout_order->update($orderId, $paymentMethod->getHoldOrderStatusId(), $comment);
 
@@ -279,6 +283,7 @@ class ControllerPaymentYaMoney extends Controller
     {
         if ($_SERVER['REQUEST_METHOD'] == "GET") {
             echo "You aren't Yandex.Money. We use module for Opencart 1.5.x";
+
             return;
         }
         $callbackParams = $_POST;
@@ -295,24 +300,30 @@ class ControllerPaymentYaMoney extends Controller
         if ($paymentMethod->checkSign($callbackParams)) {
             $this->load->model('checkout/order');
             $orderInfo = $this->model_checkout_order->getOrder($orderId);
+            $this->getModel()->log('info', 'Check signature success');
+
             if (empty($orderInfo)) {
-                $this->errorRedirect('Order#' . $orderId . ' not exists in database (callback)');
+                $this->errorRedirect('Order#'.$orderId.' not exists in database (callback)');
             } else {
+                $this->getModel()->log('info', 'Prepare change order status');
+
                 $amount = number_format($callbackParams['withdraw_amount'], 2, '.', '');
-                if ($callbackParams['paymentType'] == "MP" || $amount == number_format($orderInfo['total'], 2, '.', '')) {
-                    $sender = ($callbackParams['sender'] != '') ? "Номер кошелька Яндекс.Денег: " . $callbackParams['sender'] . "." : '';
-                    $this->model_checkout_order->confirm(
-                        $orderId,
-                        $this->config->get('ya_newStatus'),
-                        $sender . " Сумма: " . $callbackParams['withdraw_amount']
-                    );
+                if ($callbackParams['paymentType'] == "MP" || $amount == number_format($orderInfo['total'], 2, '.',
+                        '')
+                ) {
+                    $this->getModel()->log('info', 'Order status changed');
+                    $sender                       = ($callbackParams['sender'] != '') ? "Номер кошелька Яндекс.Денег: ".$callbackParams['sender']."." : '';
+                    $this->model_checkout_order->update($orderId, $this->config->get('ya_money_new_order_status'),$sender." Сумма: ".$callbackParams['withdraw_amount']);
                 }
             }
+        } else {
+            $this->getModel()->log('error', 'Check signature failed callback params'.$callbackParams);
         }
     }
 
     /**
      * Метод отображения способов оплаты пользователю
+     *
      * @param $orderInfo
      * @param bool $child
      */
@@ -328,36 +339,37 @@ class ControllerPaymentYaMoney extends Controller
             $this->data['phone'] = $orderInfo['telephone'];
         }
 
-        $this->data['cmsname'] = ($child) ? 'opencart-extracall' : 'opencart';
-        $this->data['sum'] = $this->currency->format(
+        $this->data['cmsname']        = ($child) ? 'opencart-extracall' : 'opencart';
+        $this->data['sum']            = $this->currency->format(
             $orderInfo['total'], $orderInfo['currency_code'], $orderInfo['currency_value'], false
         );
         $this->data['button_confirm'] = $this->language->get('button_confirm');
-        $this->data['order_id'] = $orderInfo['order_id'];
-        $this->data['paymentMethod'] = $paymentMethod;
-        $this->data['lang'] = $this->language;
+        $this->data['order_id']       = $orderInfo['order_id'];
+        $this->data['paymentMethod']  = $paymentMethod;
+        $this->data['lang']           = $this->language;
         if ($paymentMethod->isModeKassa()) {
             $this->assignKassa($paymentMethod);
         } elseif ($paymentMethod->isModeMoney()) {
             $this->assignMoney($paymentMethod, $orderInfo);
         } else {
             $this->data['tpl'] = 'billing';
-            $fio = array();
+            $fio               = array();
             if (!empty($orderInfo['lastname'])) {
                 $fio[] = $orderInfo['lastname'];
             }
             if (!empty($orderInfo['firstname'])) {
                 $fio[] = $orderInfo['firstname'];
             }
-            $narrative = $this->parsePlaceholders($this->config->get('ya_billing_purpose'), $orderInfo);
-            $this->data['formId'] = $this->config->get('ya_billing_form_id');
-            $this->data['narrative'] = $narrative;
-            $this->data['fio'] = implode(' ', $fio);
+            $narrative                  = $this->parsePlaceholders($this->config->get('ya_billing_purpose'),
+                $orderInfo);
+            $this->data['formId']       = $this->config->get('ya_billing_form_id');
+            $this->data['narrative']    = $narrative;
+            $this->data['fio']          = implode(' ', $fio);
             $this->data['validate_url'] = $this->url->link('payment/yamoney/create', '', 'SSL');
         }
 
-        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/yamoney.tpl')) {
-            $this->template = $this->config->get('config_template') . '/template/payment/yamoney.tpl';
+        if (file_exists(DIR_TEMPLATE.$this->config->get('config_template').'/template/payment/yamoney.tpl')) {
+            $this->template = $this->config->get('config_template').'/template/payment/yamoney.tpl';
         } else {
             $this->template = 'default/template/payment/yamoney.tpl';
         }
@@ -366,7 +378,7 @@ class ControllerPaymentYaMoney extends Controller
                 'common/column_left',
                 'common/column_right',
                 'common/footer',
-                'common/header'
+                'common/header',
             );
         }
 
@@ -376,10 +388,10 @@ class ControllerPaymentYaMoney extends Controller
 
     private function jsonError($message)
     {
-        $this->getModel()->log('warning', 'Error in json: ' . $message);
+        $this->getModel()->log('warning', 'Error in json: '.$message);
         echo json_encode(array(
             'success' => false,
-            'error' => $message,
+            'error'   => $message,
         ));
         exit();
     }
@@ -388,7 +400,7 @@ class ControllerPaymentYaMoney extends Controller
     {
         $this->data['tpl'] = 'kassa';
 
-        $this->data['allow_methods'] = array();
+        $this->data['allow_methods']  = array();
         $this->data['default_method'] = $this->config->get('ya_kassa_payment_default');
         foreach ($paymentMethod->getPaymentMethods() as $method => $name) {
             if ($paymentMethod->isPaymentMethodEnabled($method)) {
@@ -404,9 +416,9 @@ class ControllerPaymentYaMoney extends Controller
         $this->data['validate_url'] = $this->url->link('payment/yamoney/create', '', 'SSL');
 
         if (isset($this->request->server['HTTPS']) && (($this->request->server['HTTPS'] == 'on') || ($this->request->server['HTTPS'] == '1'))) {
-            $this->data['imageurl'] = $this->config->get('config_ssl') . 'image/';
+            $this->data['imageurl'] = $this->config->get('config_ssl').'image/';
         } else {
-            $this->data['imageurl'] = $this->config->get('config_url') . 'image/';
+            $this->data['imageurl'] = $this->config->get('config_url').'image/';
         }
 
         $title = $this->config->get('ya_kassa_payment_method_name');
@@ -420,40 +432,42 @@ class ControllerPaymentYaMoney extends Controller
     {
         $this->data['tpl'] = 'wallet';
 
-        $this->data['account'] = $this->config->get('ya_wallet');
+        $this->data['account'] = $this->config->get('ya_money_wallet');
+
         $this->data['shop_id'] = $paymentMethod->getShopId();
-        $this->data['scid'] = $paymentMethod->getScId();
+        $this->data['scid']    = $paymentMethod->getScId();
         $this->data['comment'] = $order_info['comment'];
 
-        $this->data['customerNumber'] = trim($order_info['order_id'] . ' ' . $order_info['email']);
+        $this->data['customerNumber'] = trim($order_info['order_id'].' '.$order_info['email']);
         $this->data['shopSuccessURL'] = (!$this->config->get('ya_pageSuccess')) ? $this->url->link(
             'checkout/success', '', 'SSL'
-        ) : $this->url->link('information/information', 'information_id=' . $this->config->get('ya_pageSuccess'));
-        $this->data['shopFailURL'] = (!$this->config->get('ya_pageFail')) ? $this->url->link(
+        ) : $this->url->link('information/information', 'information_id='.$this->config->get('ya_pageSuccess'));
+        $this->data['shopFailURL']    = (!$this->config->get('ya_pageFail')) ? $this->url->link(
             'checkout/failure', '', 'SSL'
-        ) : $this->url->link('information/information', 'information_id=' . $this->config->get('ya_pageFail'));
+        ) : $this->url->link('information/information', 'information_id='.$this->config->get('ya_pageFail'));
 
         $this->data['formcomment'] = $this->config->get('config_name');
-        $this->data['short_dest'] = $this->config->get('config_name');
+        $this->data['short_dest']  = $this->config->get('config_name');
 
-        $this->data['allow_methods'] = array();
+        $this->data['allow_methods']  = array();
         $this->data['default_method'] = $this->config->get('ya_paymentDfl');
 
         $this->data['mpos_page_url'] = $this->url->link('payment/yamoney/success', '', 'SSL');
-        $this->data['method_label'] = $this->language->get('text_method');
-        $this->data['order_text'] = $this->language->get('text_order');
+        $this->data['method_label']  = $this->language->get('text_method');
+        $this->data['order_text']    = $this->language->get('text_order');
 
         if (isset($this->request->server['HTTPS']) && (($this->request->server['HTTPS'] == 'on') || ($this->request->server['HTTPS'] == '1'))) {
-            $this->data['imageurl'] = $this->config->get('config_ssl') . 'image/';
+            $this->data['imageurl'] = $this->config->get('config_ssl').'image/';
         } else {
-            $this->data['imageurl'] = $this->config->get('config_url') . 'image/';
+            $this->data['imageurl'] = $this->config->get('config_url').'image/';
         }
     }
 
     public function repay()
     {
         if (!$this->customer->isLogged()) {
-            $this->session->data['redirect'] = $this->url->link('payment/yamoney/repay', 'order_id=' . $this->request->get['order_id'], 'SSL');
+            $this->session->data['redirect'] = $this->url->link('payment/yamoney/repay',
+                'order_id='.$this->request->get['order_id'], 'SSL');
             $this->redirect($this->url->link('account/login', '', 'SSL'));
         }
         $this->load->model('account/order');
@@ -461,7 +475,7 @@ class ControllerPaymentYaMoney extends Controller
         if ($order_info) {
             $this->payment($order_info, true);
         } else {
-            $this->redirect($this->url->link('account/order/info', 'order_id=' . $this->request->get['order_id'], 'SSL'));
+            $this->redirect($this->url->link('account/order/info', 'order_id='.$this->request->get['order_id'], 'SSL'));
         }
     }
 
@@ -469,8 +483,8 @@ class ControllerPaymentYaMoney extends Controller
     {
         if (isset($_GET['order_id'])) {
             $this->session->data['tmp_order_id'] = (int)$_GET['order_id'];
-            $orderInfo = $this->getOrderInfo('tmp_order_id');
-            $this->data['order'] = $orderInfo;
+            $orderInfo                           = $this->getOrderInfo('tmp_order_id');
+            $this->data['order']                 = $orderInfo;
         }
         $this->renderPage('success', true);
     }
@@ -479,8 +493,8 @@ class ControllerPaymentYaMoney extends Controller
     {
         if (isset($_GET['order_id'])) {
             $this->session->data['tmp_order_id'] = (int)$_GET['order_id'];
-            $orderInfo = $this->getOrderInfo('tmp_order_id');
-            $this->data['order'] = $orderInfo;
+            $orderInfo                           = $this->getOrderInfo('tmp_order_id');
+            $this->data['order']                 = $orderInfo;
         }
         $this->renderPage('failure', true);
     }
@@ -488,17 +502,17 @@ class ControllerPaymentYaMoney extends Controller
     public function renderPage($template, $child = false)
     {
         $templatePath = '/template/payment/yamoney/'.$template.'.tpl';
-        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . $templatePath)) {
-            $this->template = $this->config->get('config_template') . $templatePath;
+        if (file_exists(DIR_TEMPLATE.$this->config->get('config_template').$templatePath)) {
+            $this->template = $this->config->get('config_template').$templatePath;
         } else {
-            $this->template = 'default' . $templatePath;
+            $this->template = 'default'.$templatePath;
         }
         if ($child) {
             $this->children = array(
                 'common/column_left',
                 'common/column_right',
                 'common/footer',
-                'common/header'
+                'common/header',
             );
         }
         $this->response->addHeader('Content-Type: text/html; charset=utf-8');
@@ -531,9 +545,10 @@ class ControllerPaymentYaMoney extends Controller
         $replace = array();
         foreach ($order as $key => $value) {
             if (is_scalar($value)) {
-                $replace['%' . $key . '%'] = $value;
+                $replace['%'.$key.'%'] = $value;
             }
         }
+
         return strtr($template, $replace);
     }
 
@@ -547,13 +562,16 @@ class ControllerPaymentYaMoney extends Controller
             $this->load->model('payment/yamoney');
             $this->_model = $this->model_payment_yamoney;
         }
+
         return $this->_model;
     }
 
     /**
      * Возвращает информаицю о текущем заказе в корзине, если заказа нет, редиректит на страницу корзины
+     *
      * @param string $sessionKey Ключ в сессии, по которому лежит айди заказа
      * @param bool $redirectOnError Требуется ли перенаправить пользователя, если произошла ошибка
+     *
      * @return array|null Массив с информацией о платеже или null если произошла ошибка и флаг редиректа равен false
      */
     private function getOrderInfo($sessionKey = 'order_id', $redirectOnError = true)
@@ -561,7 +579,7 @@ class ControllerPaymentYaMoney extends Controller
         if ($this->_orderInfo === null) {
             if (!isset($this->session->data[$sessionKey])) {
                 if ($redirectOnError) {
-                    $this->errorRedirect('Order id (' . $sessionKey . ') not exists in session');
+                    $this->errorRedirect('Order id ('.$sessionKey.') not exists in session');
                 } else {
                     return null;
                 }
@@ -570,23 +588,25 @@ class ControllerPaymentYaMoney extends Controller
             $this->_orderInfo = $this->model_checkout_order->getOrder($this->session->data[$sessionKey]);
             if (empty($this->_orderInfo)) {
                 if ($redirectOnError) {
-                    $this->errorRedirect('Order#' . $this->session->data[$sessionKey] . ' not exists in database');
+                    $this->errorRedirect('Order#'.$this->session->data[$sessionKey].' not exists in database');
                 } else {
                     return null;
                 }
             }
         }
+
         return $this->_orderInfo;
     }
 
     /**
      * Осуществляет редирект на страницу
+     *
      * @param string $message Почему пользователя редиректит
      * @param string $redirectLink Ссылка на страницу редиректа
      */
     private function errorRedirect($message, $redirectLink = 'checkout/cart')
     {
-        $this->getModel()->log('warning', 'Redirect user: ' . $message);
+        $this->getModel()->log('warning', 'Redirect user: '.$message);
         $this->redirect($this->url->link($redirectLink));
     }
 }
