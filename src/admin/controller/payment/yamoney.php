@@ -21,7 +21,12 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.0.14';
+    private $moduleVersion = '1.0.15';
+
+    /**
+     * @var integer
+     */
+    private $npsRetryAfterDays = 90;
 
     /**
      * @var ModelPaymentYaMoney
@@ -125,6 +130,15 @@ class ControllerPaymentYaMoney extends Controller
 
         $this->data['breadcrumbs'] = array();
 
+        $this->data['ya_nps_prev_vote_time'] = $this->config->get('ya_nps_prev_vote_time');
+        $this->data['ya_nps_current_vote_time'] = time();
+        $this->data['callback_off_nps'] = $this->url->link('payment/yamoney/off_nps', 'token='.$this->session->data['token'], 'SSL');
+        $isTimeForVote = $this->data['ya_nps_current_vote_time'] > (int)$this->data['ya_nps_prev_vote_time']
+            + $this->npsRetryAfterDays * 86400;
+        $this->data['is_needed_show_nps'] = $isTimeForVote
+            && substr($this->data['ya_kassa_password'], 0, 5) === 'live_'
+            && $this->language->get('nps_text');
+
         $this->document->setTitle($this->language->get('heading_title'));
         $this->template = 'payment/yamoney.tpl';
         $this->children = array(
@@ -133,6 +147,14 @@ class ControllerPaymentYaMoney extends Controller
         );
 
         $this->response->setOutput($this->render());
+    }
+
+    /**
+     * Экшен для отмены показа  NPS-блока
+     */
+    public function off_nps() {
+        $this->load->model('setting/setting');
+        $this->model_setting_setting->editSettingValue('yamoney', 'ya_nps_prev_vote_time', time());
     }
 
     public function logs()
@@ -625,6 +647,7 @@ class ControllerPaymentYaMoney extends Controller
             $settings['ya_money_on']       = '0';
             $settings['ya_billing_enable'] = '0';
         }
+        $settings['ya_nps_prev_vote_time'] = $data['ya_nps_prev_vote_time'];
 
         foreach ($this->getModel()->getPaymentMethods() as $method) {
             foreach ($method->getSettings() as $param) {
