@@ -9,6 +9,19 @@
             </div>
         </div>
 
+        <?php if ($is_needed_show_nps): ?>
+            <div class="row ya_nps_block">
+                <div class="col-md-12">
+                    <div class="success">
+                        <?php echo sprintf($lang->get('nps_text'), '<a href="#" onclick="return false;" class="ya_nps_link">', '</a>'); ?>
+                        <a href="#" onclick="return false;" class="ya_nps_close"
+                           data-link="<?php echo $callback_off_nps; ?>"
+                           style="float: right; text-decoration: none">&#10006;</a>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <?php if (isset($attention) || isset($success) || !empty($errors)) : ?>
         <div class='row'>
             <?php if (isset($attention)) : ?>
@@ -41,6 +54,7 @@
 
         <!-- Навигация -->
         <form action="<?php echo $action; ?>" method="post" id="form">
+            <input type="hidden" name="ya_nps_prev_vote_time" value="<?php echo $ya_nps_prev_vote_time; ?>">
             <ul class="nav nav-tabs" role="tablist">
                 <li id="tabKassa" class="active"><a href="#kassa" class="my-tabs" aria-controls="kassa" role="tab" data-toggle="tab"><?php echo $lang->get('kassa_tab_label'); ?></a></li>
                 <li id="tabMoney"><a href="#money" class="my-tabs" aria-controls="kassa" role="tab" data-toggle="tab"><?php echo $lang->get('wallet_tab_label'); ?></a></li>
@@ -148,6 +162,22 @@
                 })
             }
         });
+
+        function ya_nps_close() {
+            $.ajax({url: $('.ya_nps_close').data('link')})
+                .done(function () {
+                    $('.ya_nps_block').slideUp();
+                    $('input[name=ya_nps_prev_vote_time]').val('<?php echo $ya_nps_current_vote_time; ?>');
+                });
+        }
+
+        function ya_nps_goto() {
+            window.open('https://yandex.ru/poll/MjLBCDQv95ZjaiZ8BeRG9f');
+            ya_nps_close();
+        }
+
+        $('.ya_nps_link').on('click', ya_nps_goto);
+        $('.ya_nps_close').on('click', ya_nps_close);
 
         $("li.active > a.my-tabs").trigger("click");
     });
