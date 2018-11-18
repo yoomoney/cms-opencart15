@@ -166,7 +166,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.0.15',
+                        'module_version' => '1.1.0',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);
@@ -224,10 +224,11 @@ class ModelPaymentYaMoney extends Model
      * @param int $orderId
      * @param \YandexCheckout\Request\Payments\CreatePaymentResponse $payment
      * @param string $orderAmount
+     * @param null $coupon
      *
      * @return bool
      */
-    private function insertPayment($orderId, $payment, $orderAmount)
+    public function insertPayment($orderId, $payment, $orderAmount, $coupon = null)
     {
         if ($payment->getPaymentMethod() === null) {
             $paymentMethodId = '';
@@ -348,6 +349,7 @@ class ModelPaymentYaMoney extends Model
     /**
      * @param CreatePaymentRequestBuilder $builder
      * @param $orderInfo
+     *
      * @return CreatePaymentRequestBuilder
      */
     private function setReceiptItems(CreatePaymentRequestBuilder $builder, $orderInfo)
@@ -480,7 +482,7 @@ class ModelPaymentYaMoney extends Model
      *
      * @return Client
      */
-    private function getClient(YandexMoneyPaymentKassa $paymentMethod)
+    public function getClient(YandexMoneyPaymentKassa $paymentMethod)
     {
         if ($this->client === null) {
             $this->client = new Client();
@@ -511,6 +513,7 @@ class ModelPaymentYaMoney extends Model
 
     /**
      * @param $orderInfo
+     *
      * @return bool|string
      */
     private function createDescription($orderInfo)

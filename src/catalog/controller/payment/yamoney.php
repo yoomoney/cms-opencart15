@@ -386,7 +386,7 @@ class ControllerPaymentYaMoney extends Controller
         $this->response->setOutput($this->render());
     }
 
-    private function jsonError($message)
+    public function jsonError($message)
     {
         $this->getModel()->log('warning', 'Error in json: '.$message);
         echo json_encode(array(
@@ -396,7 +396,7 @@ class ControllerPaymentYaMoney extends Controller
         exit();
     }
 
-    private function assignKassa(YandexMoneyPaymentKassa $paymentMethod)
+    public function assignKassa(YandexMoneyPaymentKassa $paymentMethod)
     {
         $this->data['tpl'] = 'kassa';
 
@@ -556,7 +556,7 @@ class ControllerPaymentYaMoney extends Controller
      * Возвращает модель работы с платежами, если модель ещё не инстацирована, создаёт её
      * @return ModelPaymentYaMoney Модель работы с платежами
      */
-    private function getModel()
+    public function getModel()
     {
         if ($this->_model === null) {
             $this->load->model('payment/yamoney');
@@ -574,7 +574,7 @@ class ControllerPaymentYaMoney extends Controller
      *
      * @return array|null Массив с информацией о платеже или null если произошла ошибка и флаг редиректа равен false
      */
-    private function getOrderInfo($sessionKey = 'order_id', $redirectOnError = true)
+    public function getOrderInfo($sessionKey = 'order_id', $redirectOnError = true)
     {
         if ($this->_orderInfo === null) {
             if (!isset($this->session->data[$sessionKey])) {
@@ -604,7 +604,7 @@ class ControllerPaymentYaMoney extends Controller
      * @param string $message Почему пользователя редиректит
      * @param string $redirectLink Ссылка на страницу редиректа
      */
-    private function errorRedirect($message, $redirectLink = 'checkout/cart')
+    public function errorRedirect($message, $redirectLink = 'checkout/cart')
     {
         $this->getModel()->log('warning', 'Redirect user: '.$message);
         $this->redirect($this->url->link($redirectLink));

@@ -27,6 +27,8 @@
 namespace YandexCheckout\Request\Payments;
 
 use YandexCheckout\Model\AmountInterface;
+use YandexCheckout\Model\AuthorizationDetails;
+use YandexCheckout\Model\CancellationDetails;
 use YandexCheckout\Model\Confirmation\ConfirmationRedirect;
 use YandexCheckout\Model\Confirmation\ConfirmationExternal;
 use YandexCheckout\Model\ConfirmationType;
@@ -106,6 +108,16 @@ abstract class AbstractPaymentResponse extends Payment implements PaymentInterfa
                 $metadata->offsetSet($key, $value);
             }
             $this->setMetadata($metadata);
+        }
+        if (!empty($paymentInfo['cancellation_details'])) {
+            $this->setCancellationDetails(new CancellationDetails(
+                $paymentInfo['cancellation_details']['party'], $paymentInfo['cancellation_details']['reason']
+            ));
+        }
+        if (!empty($paymentInfo['authorization_details'])) {
+            $this->setAuthorizationDetails(new AuthorizationDetails(
+                $paymentInfo['authorization_details']['rrn'], $paymentInfo['authorization_details']['auth_code']
+            ));
         }
     }
 
