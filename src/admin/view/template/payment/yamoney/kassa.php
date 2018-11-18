@@ -123,6 +123,87 @@
         </div>
     </div>
 
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-horizontal">
+                    <label class="control-label col-sm-3" for="ya_kassa_page_success"><?php echo $lang->get('b2b_sberbank_label'); ?></label>
+                    <div class="form-group">
+                        <div class="col-sm-8">
+                            <label>
+                                <input type="checkbox" id="kassa-b2b-sberbank-on" name="ya_kassa_b2b_sberbank_enabled"
+                                       value="on"<?php echo $kassa->getB2bSberbankEnabled() ? ' checked' : ''; ?> />
+                                <?php echo $lang->get('b2b_sberbank_on_label'); ?>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-sm-9 col-sm-offset-3">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"
+                                   for="b2b-sberbank-description-template"><?= $lang->get('b2b_sberbank_template_label') ?></label>
+                            <div class="col-sm-9">
+                                <input type="text" name="ya_kassa_b2b_sberbank_payment_purpose"
+                                       value="<?= $kassa->getB2bSberbankPaymentPurpose() ?>"
+                                       placeholder="<?= $lang->get('kassa_default_payment_description') ?>"
+                                       id="_b2b_sberbank_payment_purpose" class="form-control"/>
+                                <p class="help-block"><?= $lang->get('b2b_sberbank_template_help'); ?></p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label" for="kassa-b2b-tax-rate-default">
+                                <?php echo $lang->get('b2b_sberbank_vat_default_label'); ?>
+                            </label>
+                            <div class="col-sm-9">
+                                <select id="kassa-b2b-tax-rate-default" name="ya_kassa_b2b_tax_rate_default"
+                                        class="form-control">
+                                    <?php foreach ($b2bTaxRates as $id => $name) : ?>
+                                        <option value="<?php echo $id; ?>"<?php echo $kassa->getB2bSberbankDefaultTaxRate() == $id ? ' selected' : ''; ?>><?php echo $name; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <p class="help-block"><?php echo $lang->get('b2b_sberbank_vat_default_help'); ?></p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">
+                                <?php echo $lang->get('b2b_sberbank_vat_label'); ?>
+                            </label>
+                            <div class="col-sm-9">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th><?php echo $lang->get('b2b_sberbank_vat_cms_label'); ?></th>
+                                        <th><?php echo $lang->get('b2b_sberbank_vat_sbbol_label'); ?></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php foreach ($tax_classes as $id => $name) : ?>
+                                        <tr>
+                                            <td>
+                                                <label class="control-label"
+                                                       for="kassa-tax-rate-<?php echo $id; ?>"><?php echo $name; ?></td>
+                                            <td>
+                                                <select id="kassa-b2b-tax-rate-<?php echo $id; ?>"
+                                                        name="ya_kassa_b2b_tax_rates[<?php echo $id; ?>]"
+                                                        class="form-control">
+                                                    <?php $v = $kassa->getB2bTaxRateId($id);
+                                                    foreach ($b2bTaxRates as $taxRateId => $taxRateName) : ?>
+                                                        <option value="<?php echo $taxRateId; ?>"<?php echo $v == $taxRateId ? ' selected' : ''; ?>><?php echo $taxRateName; ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                                <p class="help-block"><?php echo $lang->get('b2b_sberbank_tax_message'); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     <div class="row">
         <div class="col-md-12">
             <div class="form-horizontal">

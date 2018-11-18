@@ -10,6 +10,7 @@
  * @property ModelLocalisationTaxClass $model_localisation_tax_class
  * @property ModelCatalogInformation $model_catalog_information
  * @property ModelSettingSetting $model_setting_setting
+ * @property ModelYamoneyOfferwall $model_yamoney_offerwall
  */
 class ControllerPaymentYaMoney extends Controller
 {
@@ -21,7 +22,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.0.15';
+    private $moduleVersion = '1.1.0';
 
     /**
      * @var integer
@@ -118,6 +119,7 @@ class ControllerPaymentYaMoney extends Controller
             if ($method instanceof YandexMoneyPaymentKassa) {
                 $this->data['name_methods'] = $method->getPaymentMethods();
                 $this->data['kassa_taxes']  = $method->getTaxRates();
+                $this->data['b2bTaxRates']  = $method->getB2bTaxRatesList();
             } elseif ($method instanceof YandexMoneyPaymentMoney) {
                 $this->data['wallet_name_methods'] = $method->getPaymentMethods();
             }
@@ -270,6 +272,7 @@ class ControllerPaymentYaMoney extends Controller
                     if ($this->getModel()->unpackLastVersion($fileName)) {
                         $this->session->data['flash_message'] = sprintf($this->language->get('updater_check_version_flash_message'),
                             $this->request->post['version']);
+                        $this->getModel()->install();
                         $this->redirect($link);
                     } else {
                         $this->data['errors'][] = sprintf($this->language->get('updater_error_text_unpack_failed'),
@@ -414,7 +417,7 @@ class ControllerPaymentYaMoney extends Controller
         $orderModel = $this->model_sale_order;
 
         $orderId = $this->request->get['order_id'];
-        $order = $orderModel->getOrder($orderId);
+        $order   = $orderModel->getOrder($orderId);
 
         try {
             $payment = $this->getModel()->getPaymentByOrderId($kassa, $orderId);
@@ -425,11 +428,12 @@ class ControllerPaymentYaMoney extends Controller
                 'common/footer',
             );
             $this->document->setTitle($this->language->get('captures_title'));
-            $this->data['heading_title'] = $this->language->get('captures_title');
+            $this->data['heading_title']  = $this->language->get('captures_title');
             $this->data['text_not_found'] = $this->language->get('text_not_found');
-            $this->data['breadcrumbs']= array();
-            $this->template = 'error/not_found.tpl';
+            $this->data['breadcrumbs']    = array();
+            $this->template               = 'error/not_found.tpl';
             $this->response->setOutput($this->render());
+
             return;
         }
 
@@ -480,32 +484,33 @@ class ControllerPaymentYaMoney extends Controller
             'common/footer',
         );
 
-        $this->data['language']     = $this->language;
-        $this->data['order']        = $order;
-        $this->data['products']     = $orderModel->getOrderProducts($orderId);
-        $this->data['vouchers']     = $orderModel->getOrderVouchers($orderId);
-        $this->data['totals']       = $orderModel->getOrderTotals($orderId);
-        $this->data['payment']      = $payment;
-        $this->data['message']      = $message;
-        $this->data['breadcrumbs']  = array(
+        $this->data['language']               = $this->language;
+        $this->data['order']                  = $order;
+        $this->data['products']               = $orderModel->getOrderProducts($orderId);
+        $this->data['vouchers']               = $orderModel->getOrderVouchers($orderId);
+        $this->data['totals']                 = $orderModel->getOrderTotals($orderId);
+        $this->data['payment']                = $payment;
+        $this->data['message']                = $message;
+        $this->data['breadcrumbs']            = array(
             array(
                 'name' => $this->language->get('captures_title'),
-                'link' => $this->url->link('payment/yamoney/captureForm', 'token='.$this->session->data['token'].'&order_id='.$orderId, true),
+                'link' => $this->url->link('payment/yamoney/captureForm',
+                    'token='.$this->session->data['token'].'&order_id='.$orderId, true),
             ),
         );
-        $this->data['capture_action'] = $this->url->link(
+        $this->data['capture_action']         = $this->url->link(
             'payment/yamoney/captureForm',
             'token='.$this->session->data['token'].'&order_id='.$orderId,
             'SSL'
         );
-        $this->data['cancel_link'] = $this->url->link(
+        $this->data['cancel_link']            = $this->url->link(
             'payment/yamoney/captureForm',
             'token='.$this->session->data['token'].'&order_id='.$orderId.'&cancel_payment=yes',
             'SSL'
         );
-        $this->data['capture_form_route'] = 'payment/yamoney/captureForm';
-        $this->data['capture_form_token'] = $this->session->data['token'];
-        $this->data['capture_form_order_id'] = $orderId;
+        $this->data['capture_form_route']     = 'payment/yamoney/captureForm';
+        $this->data['capture_form_token']     = $this->session->data['token'];
+        $this->data['capture_form_order_id']  = $orderId;
         $this->data['is_waiting_for_capture'] = $payment->getStatus() === \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE;
 
         $this->response->setOutput($this->render());
@@ -514,12 +519,13 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @param ModelSaleOrder $orderModel
      * @param array $order
+     *
      * @return array
      */
     private function updateOrder($orderModel, $order)
     {
         $quantity = $this->request->post['quantity'];
-        $totals = $this->request->post['totals'];
+        $totals   = $this->request->post['totals'];
 
         $products = $orderModel->getOrderProducts($order['order_id']);
         foreach ($products as $index => $product) {
@@ -527,9 +533,9 @@ class ControllerPaymentYaMoney extends Controller
                 unset($products[$index]);
                 continue;
             }
-            $products[$index]['quantity'] = $quantity[$product['product_id']];
-            $products[$index]['total'] = $products[$index]['price'] * $products[$index]['quantity'];
-            $products[$index]['order_option'] = $orderModel->getOrderOptions(
+            $products[$index]['quantity']       = $quantity[$product['product_id']];
+            $products[$index]['total']          = $products[$index]['price'] * $products[$index]['quantity'];
+            $products[$index]['order_option']   = $orderModel->getOrderOptions(
                 $order['order_id'],
                 $product['order_product_id']
             );
@@ -547,9 +553,9 @@ class ControllerPaymentYaMoney extends Controller
                 continue;
             }
             $order['order_total'][$index]['value'] = $totals[$total['code']];
-            $order['order_total'][$index]['text'] = $this->currency->format($totals[$total['code']]);
+            $order['order_total'][$index]['text']  = $this->currency->format($totals[$total['code']]);
         }
-        $maxTotal = end($order['order_total']);
+        $maxTotal       = end($order['order_total']);
         $order['total'] = $maxTotal['value'];
 
         $orderModel->editOrder($order['order_id'], $order);
@@ -657,6 +663,12 @@ class ControllerPaymentYaMoney extends Controller
                 }
             }
         }
+
+        $settings['ya_kassa_b2b_sberbank_enabled']         = isset($data['ya_kassa_b2b_sberbank_enabled']) ? $data['ya_kassa_b2b_sberbank_enabled'] : "";
+        $settings['ya_kassa_b2b_sberbank_payment_purpose'] = isset($data['ya_kassa_b2b_sberbank_payment_purpose']) ? $data['ya_kassa_b2b_sberbank_payment_purpose'] : "";
+        $settings['ya_kassa_b2b_tax_rate_default']         = isset($data['ya_kassa_b2b_tax_rate_default']) ? $data['ya_kassa_b2b_tax_rate_default'] : "";
+        $settings['ya_kassa_b2b_tax_rates']                = isset($data['ya_kassa_b2b_tax_rates']) ? $data['ya_kassa_b2b_tax_rates'] : "";
+        $settings['yamoneyb2bsberbank_status'] = $settings['yamoney_status'];
 
         $this->model_setting_setting->editSetting('yamoney', $settings);
 

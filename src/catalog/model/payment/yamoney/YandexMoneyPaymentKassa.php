@@ -1,6 +1,9 @@
 <?php
 
 use YandexCheckout\Client;
+use YandexCheckout\Model\PaymentData\B2b\Sberbank\VatDataRate;
+use YandexCheckout\Model\PaymentData\B2b\Sberbank\VatDataType;
+use YandexCheckout\Model\PaymentMethodType;
 
 require_once dirname(__FILE__).'/lib/Common/AbstractEnum.php';
 require_once dirname(__FILE__).'/lib/Model/PaymentMethodType.php';
@@ -36,6 +39,10 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
      */
     private $addInstallmentsBlock;
 
+    protected $b2bSberbankEnabled;
+    protected $b2bSberbankPaymentPurpose;
+    protected $b2bSberbankDefaultTaxRate;
+    protected $b2bTaxRates;
 
     public $language;
 
@@ -71,6 +78,14 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
         } else {
             $this->testMode = false;
         }
+
+        $this->b2bSberbankEnabled        = $config->get('ya_kassa_b2b_sberbank_enabled');
+        $this->b2bSberbankPaymentPurpose = $config->get('ya_kassa_b2b_sberbank_payment_purpose');
+        if(!$this->b2bSberbankPaymentPurpose) {
+            $this->b2bSberbankPaymentPurpose = $this->language->get('kassa_description_default_placeholder');
+        }
+        $this->b2bSberbankDefaultTaxRate = $config->get('ya_kassa_b2b_tax_rate_default');
+        $this->b2bTaxRates               = $config->get('ya_kassa_b2b_tax_rates');
     }
 
     /**
@@ -177,6 +192,10 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             'ya_kassa_add_installments_block',
             'ya_kassa_create_order_before_redirect',
             'ya_kassa_clear_cart_before_redirect',
+            'ya_kassa_b2b_sberbank_enabled',
+            'ya_kassa_b2b_sberbank_payment_purpose',
+            'ya_kassa_b2b_tax_rate_default',
+            'ya_kassa_b2b_tax_rates',
         );
     }
 
@@ -186,20 +205,22 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
     public function getPaymentMethods()
     {
         $titles = array(
-            YandexCheckout\Model\PaymentMethodType::BANK_CARD      => $this->language->get('bank_cards_title'),
-            YandexCheckout\Model\PaymentMethodType::YANDEX_MONEY   => $this->language->get('text_method_yandex_money'),
-            YandexCheckout\Model\PaymentMethodType::SBERBANK       => $this->language->get('text_method_sberbank'),
-            YandexCheckout\Model\PaymentMethodType::QIWI           => $this->language->get('text_method_qiwi'),
-            YandexCheckout\Model\PaymentMethodType::WEBMONEY       => $this->language->get('text_method_webmoney'),
-            YandexCheckout\Model\PaymentMethodType::CASH           => $this->language->get('cash_title'),
-            YandexCheckout\Model\PaymentMethodType::MOBILE_BALANCE => $this->language->get('mobile_balance_title'),
-            YandexCheckout\Model\PaymentMethodType::ALFABANK       => $this->language->get('text_method_alfabank'),
-            YandexCheckout\Model\PaymentMethodType::INSTALLMENTS   => $this->language->get('text_method_installments'),
+            PaymentMethodType::BANK_CARD      => $this->language->get('bank_cards_title'),
+            PaymentMethodType::YANDEX_MONEY   => $this->language->get('text_method_yandex_money'),
+            PaymentMethodType::SBERBANK       => $this->language->get('text_method_sberbank'),
+            PaymentMethodType::QIWI           => $this->language->get('text_method_qiwi'),
+            PaymentMethodType::WEBMONEY       => $this->language->get('text_method_webmoney'),
+            PaymentMethodType::CASH           => $this->language->get('cash_title'),
+            PaymentMethodType::MOBILE_BALANCE => $this->language->get('mobile_balance_title'),
+            PaymentMethodType::ALFABANK       => $this->language->get('text_method_alfabank'),
+            PaymentMethodType::INSTALLMENTS   => $this->language->get('text_method_installments'),
         );
 
         $result = array();
-        foreach (YandexCheckout\Model\PaymentMethodType::getEnabledValues() as $value) {
-            $result[$value] = $titles[$value];
+        foreach (PaymentMethodType::getEnabledValues() as $value) {
+            if ($value !== PaymentMethodType::B2B_SBERBANK) {
+                $result[$value] = $titles[$value];
+            }
         }
 
         return $result;
@@ -324,11 +345,63 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
     }
 
     /**
+     * @return mixed
+     */
+    public function getB2bSberbankEnabled()
+    {
+        return $this->b2bSberbankEnabled == 'on';
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getB2bSberbankPaymentPurpose()
+    {
+        return $this->b2bSberbankPaymentPurpose;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getB2bSberbankDefaultTaxRate()
+    {
+        return $this->b2bSberbankDefaultTaxRate;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getB2bTaxRates()
+    {
+        return $this->b2bTaxRates;
+    }
+
+    /**
      * @param string $key
+     *
      * @return string
      */
     public function i18n($key)
     {
         return $this->language->get($key);
+    }
+
+    public function getB2bTaxRateId($shopTaxRateId)
+    {
+        if (isset($this->b2bTaxRates[$shopTaxRateId])) {
+            return $this->b2bTaxRates[$shopTaxRateId];
+        }
+
+        return $this->b2bSberbankDefaultTaxRate;
+    }
+
+    public function getB2bTaxRatesList()
+    {
+        return array(
+            VatDataType::UNTAXED => $this->language->get('b2b_tax_rate_untaxed_label'),
+            VatDataRate::RATE_7  => $this->language->get('b2b_tax_rate_7_label'),
+            VatDataRate::RATE_10 => $this->language->get('b2b_tax_rate_10_label'),
+            VatDataRate::RATE_18 => $this->language->get('b2b_tax_rate_18_label'),
+        );
     }
 }

@@ -36,3 +36,6 @@ $_['kassa_description_default_placeholder'] = 'Payment for order No. %order_id%'
 $_['yamoney_pay_button_text'] = '<span>Pay</span>with Yandex';
 
 $_['captures_new_hold_payment']= 'Поступил новый платёж. Он ожидает подтверждения до %1$s, после чего автоматически отменится';
+
+$_['yandex_money_b2b_sberbank'] = 'Sberbank Business Online';
+$_['b2b_tax_rates_error'] = 'Your cart contains products with different VAT rates, and you won\'t be able to pay for them at the same time. You can divide the purchase into a few steps: first, pay for products with one VAT rate, then pay for the products with the other.';
