@@ -2,6 +2,7 @@
 
 use YandexCheckout\Client;
 use YandexCheckout\Model\Payment;
+use YandexCheckout\Model\PaymentMethodType;
 use YandexCheckout\Request\Payments\CreatePaymentRequestBuilder;
 
 require_once dirname(__FILE__).'/yamoney/autoload.php';
@@ -125,7 +126,8 @@ class ModelPaymentYaMoney extends Model
                 try {
                     $paymentObject = $client->getPaymentInfo($payment['payment_id']);
                     if ($paymentObject === null) {
-                        $this->updatePaymentStatus($payment['payment_id'], \YandexCheckout\Model\PaymentStatus::CANCELED);
+                        $this->updatePaymentStatus($payment['payment_id'],
+                            \YandexCheckout\Model\PaymentStatus::CANCELED);
                     } else {
                         $result[] = $paymentObject;
                         if ($paymentObject->getStatus() !== $payment['status']) {
@@ -145,13 +147,14 @@ class ModelPaymentYaMoney extends Model
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param $orderInfo
+     *
      * @return \YandexCheckout\Model\PaymentInterface
      */
     public function createPayment(YandexMoneyPaymentKassa $paymentMethod, $orderInfo)
     {
         $client = $this->getClient($paymentMethod);
 
-        $paymentType =  !empty($_GET['paymentType']) ? $_GET['paymentType'] : '';
+        $paymentType = !empty($_GET['paymentType']) ? $_GET['paymentType'] : '';
 
         try {
             $builder = \YandexCheckout\Request\Payments\CreatePaymentRequest::builder();
@@ -166,7 +169,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.1.0',
+                        'module_version' => '1.1.1',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);
@@ -336,6 +339,7 @@ class ModelPaymentYaMoney extends Model
 
     public function confirmOrder(YandexMoneyPaymentMethod $paymentMethod, $orderId)
     {
+
         $pay_url = $this->url->link('payment/yamoney/repay', 'order_id='.$orderId, 'SSL');
         $this->load->model('checkout/order');
         $this->model_checkout_order->confirm(
@@ -434,10 +438,35 @@ class ModelPaymentYaMoney extends Model
      */
     public function confirmOrderPayment($orderId, $payment, $statusId)
     {
+        $message = '';
+        if ($payment->getPaymentMethod()->getType() == PaymentMethodType::B2B_SBERBANK) {
+            $payerBankDetails = $payment->getPaymentMethod()->getPayerBankDetails();
+
+            $fields = array(
+                'fullName'   => 'Полное наименование организации',
+                'shortName'  => 'Сокращенное наименование организации',
+                'adress'     => 'Адрес организации',
+                'inn'        => 'ИНН организации',
+                'kpp'        => 'КПП организации',
+                'bankName'   => 'Наименование банка организации',
+                'bankBranch' => 'Отделение банка организации',
+                'bankBik'    => 'БИК банка организации',
+                'account'    => 'Номер счета организации',
+            );
+
+
+            foreach ($fields as $field => $caption) {
+                if (isset($requestData[$field])) {
+                    $message .= $caption.': '.$payerBankDetails->offsetGet($field).'\n';
+                }
+            }
+        }
+
+
         $sql     = 'UPDATE `'.DB_PREFIX.'order_history` SET `comment` = \'Платёж подтверждён\' WHERE `order_id` = '
                    .(int)$orderId.' AND `order_status_id` <= 1';
         $comment = 'Номер транзакции: '.$payment->getId().'. Сумма: '.$payment->getAmount()->getValue()
-                   .' '.$payment->getAmount()->getCurrency();
+                   .' '.$payment->getAmount()->getCurrency().$message;
         $this->load->model('checkout/order');
         $this->model_checkout_order->update($orderId, $statusId, $comment);
         $this->db->query($sql);
@@ -518,8 +547,7 @@ class ModelPaymentYaMoney extends Model
      */
     private function createDescription($orderInfo)
     {
-        $descriptionTemplate = $this->config->get('ya_kassa_description_template') ?
-            : $this->language->get('kassa_description_default_placeholder');
+        $descriptionTemplate = $this->config->get('ya_kassa_description_template') ?: $this->language->get('kassa_description_default_placeholder');
 
         $replace = array();
         foreach ($orderInfo as $key => $value) {
