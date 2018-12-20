@@ -169,7 +169,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.1.1',
+                        'module_version' => '1.1.2',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);
@@ -366,21 +366,33 @@ class ModelPaymentYaMoney extends Model
         } elseif (isset($orderInfo['phone'])) {
             $builder->setReceiptPhone($orderInfo['phone']);
         }
-        $taxRates = $this->config->get('ya_kassa_receipt_tax_id');
-
-        $orderProducts = $this->model_account_order->getOrderProducts($orderInfo['order_id']);
+        $taxRates              = $this->config->get('ya_kassa_receipt_tax_id');
+        $defaultPaymentSubject = $this->config->get('ya_kassa_default_payment_subject');
+        $defaultPaymentMode    = $this->config->get('ya_kassa_default_payment_mode');
+        $orderProducts         = $this->model_account_order->getOrderProducts($orderInfo['order_id']);
         foreach ($orderProducts as $prod) {
             $productInfo = $this->model_catalog_product->getProduct($prod['product_id']);
-            $price       = $this->currency->format($prod['price'], 'RUB', '', false);
+            $properties  = $this->getPaymentProperties($prod['product_id']);
+            if (!empty($properties)) {
+                $paymentMode    = !empty($properties['payment_mode']) ? $properties['payment_mode'] : $defaultPaymentMode;
+                $paymentSubject = !empty($properties['payment_subject']) ? $properties['payment_subject'] : $defaultPaymentSubject;
+            } else {
+                $paymentMode    = $defaultPaymentMode;
+                $paymentSubject = $defaultPaymentSubject;
+            }
+            $price = $this->currency->format($prod['price'], 'RUB', '', false);
             if (isset($productInfo['tax_class_id'])) {
                 $taxId = $productInfo['tax_class_id'];
                 if (isset($taxRates[$taxId])) {
-                    $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates[$taxId]);
+                    $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates[$taxId],
+                        $paymentMode, $paymentSubject);
                 } else {
-                    $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates['default']);
+                    $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates['default'],
+                        $paymentMode, $paymentSubject);
                 }
             } else {
-                $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates['default']);
+                $builder->addReceiptItem($prod['name'], $price, $prod['quantity'], $taxRates['default'],
+                    $paymentMode, $paymentSubject);
             }
         }
 
@@ -391,12 +403,15 @@ class ModelPaymentYaMoney extends Model
                 if (isset($total['tax_class_id'])) {
                     $taxId = $total['tax_class_id'];
                     if (isset($taxRates[$taxId])) {
-                        $builder->addReceiptShipping($total['title'], $price, $taxRates[$taxId]);
+                        $builder->addReceiptShipping($total['title'], $price, $taxRates[$taxId], $defaultPaymentMode,
+                            $defaultPaymentSubject);
                     } else {
-                        $builder->addReceiptShipping($total['title'], $price, $taxRates['default']);
+                        $builder->addReceiptShipping($total['title'], $price, $taxRates['default'], $defaultPaymentMode,
+                            $defaultPaymentSubject);
                     }
                 } else {
-                    $builder->addReceiptShipping($total['title'], $price, $taxRates['default']);
+                    $builder->addReceiptShipping($total['title'], $price, $taxRates['default'], $defaultPaymentMode,
+                        $defaultPaymentSubject);
                 }
             }
         }
@@ -558,5 +573,13 @@ class ModelPaymentYaMoney extends Model
         $description = strtr($descriptionTemplate, $replace);
 
         return (string)mb_substr($description, 0, Payment::MAX_LENGTH_DESCRIPTION);
+    }
+
+    public function getPaymentProperties($productId)
+    {
+        $res         = $this->db->query('SELECT * FROM `'.DB_PREFIX.'ya_money_product_properties` WHERE product_id='.$productId);
+        $productProp = $res->row;
+
+        return $productProp;
     }
 }

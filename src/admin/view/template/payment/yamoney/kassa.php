@@ -358,6 +358,25 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="col-sm-8 col-sm-offset-3">
+                        <p style="padding-top: 8px;"><b><?php echo $lang->get('kassa_default_payment_mode_label'); ?></b></p>
+                        <select name="ya_kassa_default_payment_mode" class="form-control" data-toggle="tooltip" data-placement="left" title="">
+                            <?php foreach ($paymentModeEnum as $paymentMode => $paymentModeTitle) : ?>
+                                <option value="<?php echo $paymentMode; ?>" <?= $kassa->getDefaultPaymentMode() != $paymentMode ?: 'selected="selected"'?>><?php echo $paymentModeTitle; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-8 col-sm-offset-3">
+                        <p style="padding-top: 8px;"><b><?php echo $lang->get('kassa_default_payment_subject_label'); ?></b></p>
+                        <select name="ya_kassa_default_payment_subject" class="form-control" data-toggle="tooltip" data-placement="left" title="">
+                            <?php foreach ($paymentSubjectEnum as $paymentSubject => $paymentSubjectTitle) : ?>
+                                <option value="<?php echo $paymentSubject ; ?>" <?= $kassa->getDefaultPaymentSubject() != $paymentSubject ?: 'selected="selected"'?>><?php echo $paymentSubjectTitle; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="help-block"><?php echo $lang->get('ffd_help_message'); ?></p>
+                    </div>
+
                 </div>
                 <!-- -->
             </div>

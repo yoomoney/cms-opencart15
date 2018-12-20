@@ -4,6 +4,8 @@ use YandexCheckout\Client;
 use YandexCheckout\Model\PaymentData\B2b\Sberbank\VatDataRate;
 use YandexCheckout\Model\PaymentData\B2b\Sberbank\VatDataType;
 use YandexCheckout\Model\PaymentMethodType;
+use YandexCheckout\Model\Receipt\PaymentMode;
+use YandexCheckout\Model\Receipt\PaymentSubject;
 
 require_once dirname(__FILE__).'/lib/Common/AbstractEnum.php';
 require_once dirname(__FILE__).'/lib/Model/PaymentMethodType.php';
@@ -43,9 +45,18 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
     protected $b2bSberbankPaymentPurpose;
     protected $b2bSberbankDefaultTaxRate;
     protected $b2bTaxRates;
+    protected $defaultPaymentMode;
+    protected $defaultPaymentSubject;
+
 
     public $language;
 
+    /**
+     * YandexMoneyPaymentKassa constructor.
+     *
+     * @param Config $config
+     * @param null $language
+     */
     public function __construct($config, $language = null)
     {
         parent::__construct($config);
@@ -81,11 +92,14 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
 
         $this->b2bSberbankEnabled        = $config->get('ya_kassa_b2b_sberbank_enabled');
         $this->b2bSberbankPaymentPurpose = $config->get('ya_kassa_b2b_sberbank_payment_purpose');
-        if(!$this->b2bSberbankPaymentPurpose) {
+        if (!$this->b2bSberbankPaymentPurpose) {
             $this->b2bSberbankPaymentPurpose = $this->language->get('kassa_description_default_placeholder');
         }
         $this->b2bSberbankDefaultTaxRate = $config->get('ya_kassa_b2b_tax_rate_default');
         $this->b2bTaxRates               = $config->get('ya_kassa_b2b_tax_rates');
+
+        $this->defaultPaymentMode    = $config->get('ya_kassa_default_payment_mode');
+        $this->defaultPaymentSubject = $config->get('ya_kassa_default_payment_subject');
     }
 
     /**
@@ -403,5 +417,53 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             VatDataRate::RATE_10 => $this->language->get('b2b_tax_rate_10_label'),
             VatDataRate::RATE_18 => $this->language->get('b2b_tax_rate_18_label'),
         );
+    }
+
+    public function getPaymentModeEnum()
+    {
+        return array(
+            PaymentMode::FULL_PREPAYMENT    => 'Полная предоплата ('.PaymentMode::FULL_PREPAYMENT.')',
+            PaymentMode::PARTIAL_PREPAYMENT => 'Частичная предоплата ('.PaymentMode::PARTIAL_PREPAYMENT.')',
+            PaymentMode::ADVANCE            => 'Аванс ('.PaymentMode::ADVANCE.')',
+            PaymentMode::FULL_PAYMENT       => 'Полный расчет ('.PaymentMode::FULL_PAYMENT.')',
+            PaymentMode::PARTIAL_PAYMENT    => 'Частичный расчет и кредит ('.PaymentMode::PARTIAL_PAYMENT.')',
+            PaymentMode::CREDIT             => 'Кредит ('.PaymentMode::CREDIT.')',
+            PaymentMode::CREDIT_PAYMENT     => 'Выплата по кредиту ('.PaymentMode::CREDIT_PAYMENT.')',
+        );
+    }
+
+    public function getPaymentSubjectEnum()
+    {
+        return array(
+            PaymentSubject::COMMODITY             => 'Товар ('.PaymentSubject::COMMODITY.')',
+            PaymentSubject::EXCISE                => 'Подакцизный товар ('.PaymentSubject::EXCISE.')',
+            PaymentSubject::JOB                   => 'Работа ('.PaymentSubject::JOB.')',
+            PaymentSubject::SERVICE               => 'Услуга ('.PaymentSubject::SERVICE.')',
+            PaymentSubject::GAMBLING_BET          => 'Ставка в азартной игре ('.PaymentSubject::GAMBLING_BET.')',
+            PaymentSubject::GAMBLING_PRIZE        => 'Выигрыш в азартной игре ('.PaymentSubject::GAMBLING_PRIZE.')',
+            PaymentSubject::LOTTERY               => 'Лотерейный билет ('.PaymentSubject::LOTTERY.')',
+            PaymentSubject::LOTTERY_PRIZE         => 'Выигрыш в лотерею ('.PaymentSubject::LOTTERY_PRIZE.')',
+            PaymentSubject::INTELLECTUAL_ACTIVITY => 'Результаты интеллектуальной деятельности ('.PaymentSubject::INTELLECTUAL_ACTIVITY.')',
+            PaymentSubject::PAYMENT               => 'Платеж ('.PaymentSubject::PAYMENT.')',
+            PaymentSubject::AGENT_COMMISSION      => 'Агентское вознаграждение ('.PaymentSubject::AGENT_COMMISSION.')',
+            PaymentSubject::COMPOSITE             => 'Несколько вариантов ('.PaymentSubject::COMPOSITE.')',
+            PaymentSubject::ANOTHER               => 'Другое ('.PaymentSubject::ANOTHER.')',
+        );
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDefaultPaymentMode()
+    {
+        return $this->defaultPaymentMode;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDefaultPaymentSubject()
+    {
+        return $this->defaultPaymentSubject;
     }
 }

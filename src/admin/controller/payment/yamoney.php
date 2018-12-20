@@ -22,7 +22,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.1.1';
+    private $moduleVersion = '1.1.2';
 
     /**
      * @var integer
@@ -117,9 +117,11 @@ class ControllerPaymentYaMoney extends Controller
                 $this->data[$param] = isset($post[$param]) ? $post[$param] : $this->config->get($param);
             }
             if ($method instanceof YandexMoneyPaymentKassa) {
-                $this->data['name_methods'] = $method->getPaymentMethods();
-                $this->data['kassa_taxes']  = $method->getTaxRates();
-                $this->data['b2bTaxRates']  = $method->getB2bTaxRatesList();
+                $this->data['name_methods']       = $method->getPaymentMethods();
+                $this->data['kassa_taxes']        = $method->getTaxRates();
+                $this->data['b2bTaxRates']        = $method->getB2bTaxRatesList();
+                $this->data['paymentModeEnum']    = $method->getPaymentModeEnum();
+                $this->data['paymentSubjectEnum'] = $method->getPaymentSubjectEnum();
             } elseif ($method instanceof YandexMoneyPaymentMoney) {
                 $this->data['wallet_name_methods'] = $method->getPaymentMethods();
             }
@@ -132,14 +134,15 @@ class ControllerPaymentYaMoney extends Controller
 
         $this->data['breadcrumbs'] = array();
 
-        $this->data['ya_nps_prev_vote_time'] = $this->config->get('ya_nps_prev_vote_time');
+        $this->data['ya_nps_prev_vote_time']    = $this->config->get('ya_nps_prev_vote_time');
         $this->data['ya_nps_current_vote_time'] = time();
-        $this->data['callback_off_nps'] = $this->url->link('payment/yamoney/off_nps', 'token='.$this->session->data['token'], 'SSL');
-        $isTimeForVote = $this->data['ya_nps_current_vote_time'] > (int)$this->data['ya_nps_prev_vote_time']
-            + $this->npsRetryAfterDays * 86400;
-        $this->data['is_needed_show_nps'] = $isTimeForVote
-            && substr($this->data['ya_kassa_password'], 0, 5) === 'live_'
-            && $this->language->get('nps_text');
+        $this->data['callback_off_nps']         = $this->url->link('payment/yamoney/off_nps',
+            'token='.$this->session->data['token'], 'SSL');
+        $isTimeForVote                          = $this->data['ya_nps_current_vote_time'] > (int)$this->data['ya_nps_prev_vote_time']
+                                                                                            + $this->npsRetryAfterDays * 86400;
+        $this->data['is_needed_show_nps']       = $isTimeForVote
+                                                  && substr($this->data['ya_kassa_password'], 0, 5) === 'live_'
+                                                  && $this->language->get('nps_text');
 
         $this->document->setTitle($this->language->get('heading_title'));
         $this->template = 'payment/yamoney.tpl';
@@ -154,7 +157,8 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * Экшен для отмены показа  NPS-блока
      */
-    public function off_nps() {
+    public function off_nps()
+    {
         $this->load->model('setting/setting');
         $this->model_setting_setting->editSettingValue('yamoney', 'ya_nps_prev_vote_time', time());
     }
@@ -565,6 +569,7 @@ class ControllerPaymentYaMoney extends Controller
 
     /**
      * @param $data
+     *
      * @return bool
      */
     private function validate($data)
@@ -668,7 +673,9 @@ class ControllerPaymentYaMoney extends Controller
         $settings['ya_kassa_b2b_sberbank_payment_purpose'] = isset($data['ya_kassa_b2b_sberbank_payment_purpose']) ? $data['ya_kassa_b2b_sberbank_payment_purpose'] : "";
         $settings['ya_kassa_b2b_tax_rate_default']         = isset($data['ya_kassa_b2b_tax_rate_default']) ? $data['ya_kassa_b2b_tax_rate_default'] : "";
         $settings['ya_kassa_b2b_tax_rates']                = isset($data['ya_kassa_b2b_tax_rates']) ? $data['ya_kassa_b2b_tax_rates'] : "";
-        $settings['yamoneyb2bsberbank_status'] = $settings['yamoney_status'];
+        $settings['ya_kassa_default_payment_mode']         = isset($data['ya_kassa_default_payment_mode']) ? $data['ya_kassa_default_payment_mode'] : "";
+        $settings['ya_kassa_default_payment_subject']      = isset($data['ya_kassa_default_payment_subject']) ? $data['ya_kassa_default_payment_subject'] : "";
+        $settings['yamoneyb2bsberbank_status']             = $settings['yamoney_status'];
 
         $this->model_setting_setting->editSetting('yamoney', $settings);
 
