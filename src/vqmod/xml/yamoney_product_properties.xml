@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+    <id>yamoney_product_properties</id>
+    <version>1.4.x and above</version>
+    <vqmver required="true">2.6.0</vqmver>
+    <author>Yandex.Money</author>
+
+
+    <file name="admin/view/template/catalog/product_form.tpl" error="skip">
+        <operation error="skip" info="Add Capture Link">
+            <search position="after"><![CDATA[<td><input type="text" name="sort_order" value="<?php echo $sort_order; ?>" size="2" /></td>]]></search>
+            <add><![CDATA[
+                </tr>
+                <tr>
+                <td>Признак способа расчета</td>
+                    <td>
+                      <select name="ym_payment_mode">
+                          <?php foreach($paymentModeEnum as $pmvalue => $pmtitle):?>
+                              <option value="<?= $pmvalue ?>" <?= $product_ym_payment_mode == $pmvalue ? 'selected="selected"': ''?>>
+                                  <?= $pmtitle ?>
+                              </option>
+                          <?php endforeach;?>
+                      </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Признак предмета расчета</td>
+                    <td>
+                        <select name="ym_payment_subject">
+                            <?php foreach($paymentSubjectEnum as $psvalue => $pstitle):?>
+                                <option value="<?= $psvalue ?>" <?= $product_ym_payment_subject == $psvalue ? 'selected="selected"': ''?>>
+                                    <?= $pstitle ?>
+                                </option>
+                            <?php endforeach;?>
+                        </select>
+                    </td>
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/controller/catalog/product.php" error="skip">
+        <operation error="skip" info="Add Capture Link">
+            <search position="after"><![CDATA[$this->data['layouts'] = $this->model_design_layout->getLayouts();]]></search>
+            <add><![CDATA[
+                $res = $this->db->query('SELECT * FROM `'.DB_PREFIX.'ya_money_product_properties` WHERE product_id='.$this->request->get['product_id']);
+                $productProp = $res->row;
+                $this->data['product_ym_payment_mode'] = !empty($productProp['payment_mode']) ? $productProp['payment_mode'] : '';
+                $this->data['product_ym_payment_subject'] = !empty($productProp['payment_subject']) ? $productProp['payment_subject'] : '';
+
+                $this->data['paymentModeEnum'] = array(
+                    'full_prepayment'    => 'Полная предоплата (\'full_prepayment\')',
+                    'partial_prepayment' => 'Частичная предоплата (\'partial_prepayment\')',
+                    'advance'            => 'Аванс (\'advance\')',
+                    'full_payment'       => 'Полный расчет (\'full_payment\')',
+                    'partial_payment'    => 'Частичный расчет и кредит (\'partial_payment\')',
+                    'credit'             => 'Кредит (\'credit\')',
+                    'credit_payment'     => 'Выплата по кредиту (\'credit_payment\')',
+                );
+                $this->data['paymentSubjectEnum'] = array(
+                    'commodity'             => 'Товар (\'commodity\')',
+                    'excise'                => 'Подакцизный товар (\'excise\')',
+                    'job'                   => 'Работа (\'job\')',
+                    'service'               => 'Услуга (\'service\')',
+                    'gambling_bet'          => 'Ставка в азартной игре (\'gambling_bet\')',
+                    'gambling_prize'        => 'Выигрыш в азартной игре (\'gambling_prize\')',
+                    'lottery'               => 'Лотерейный билет (\'lottery\')',
+                    'lottery_prize'         => 'Выигрыш в лотерею (\'lottery_prize\')',
+                    'intellectual_activity' => 'Результаты интеллектуальной деятельности (\'intellectual_activity\')',
+                    'payment'               => 'Платеж (\'payment\')',
+                    'agent_commission'      => 'Агентское вознаграждение (\'agent_commission\')',
+                    'composite'             => 'Несколько вариантов (\'composite\')',
+                    'another'               => 'Другое (\'another\')',
+                );
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/controller/catalog/product.php" error="skip">
+        <operation error="skip" info="Add Capture Link">
+            <search position="after"><![CDATA[$this->model_catalog_product->editProduct($this->request->get['product_id'], $this->request->post);]]></search>
+            <add><![CDATA[
+                if(!empty($this->request->post['ym_payment_mode']) && !empty($this->request->post['ym_payment_subject'])) {
+                    $res = $this->db->query('INSERT INTO `'.DB_PREFIX.'ya_money_product_properties` (product_id, payment_mode, payment_subject)
+                        VALUES('.$this->request->get['product_id'].', "'.$this->request->post['ym_payment_mode'].'", "'.$this->request->post['ym_payment_subject'].'")
+                        ON DUPLICATE KEY UPDATE  payment_mode="'.$this->request->post['ym_payment_mode'].'", payment_subject="'.$this->request->post['ym_payment_subject'].'"'
+                    );
+                }
+            ]]></add>
+        </operation>
+    </file>
+</modification>
