@@ -14,6 +14,7 @@ $_['text_method_pb'] = 'Payment via Promsvyazbank';
 $_['text_method_qiwi'] = 'QIWI Wallet';
 $_['text_method_qp'] = 'Trust payment (Qppi.ru)';
 $_['text_method_mp'] = 'Mobile payment kiosk';
+$_['text_method_tinkoff_bank'] = 'Tinkoff online banking';
 $_['text_method_installments'] = 'Installments';
 $_['text_method_installments_amount'] = ' (%s ₽ per month)';
 $_['bank_cards_title'] = 'Bank cards';

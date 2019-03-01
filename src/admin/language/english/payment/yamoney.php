@@ -154,6 +154,7 @@ $_['text_method_sberbank']     = 'Sberbank Online';
 $_['text_method_ma']           = 'MasterPass';
 $_['text_method_pb']           = 'Promsvyazbank';
 $_['text_method_qiwi']         = 'QIWI Wallet';
+$_['text_method_tinkoff_bank'] = 'Tinkoff online banking';
 $_['text_method_qp']           = 'Deferred payment (QPPI.ru)';
 $_['text_method_mp']           = 'Mobile payment kiosk';
 $_['text_method_installments'] = 'Installments';

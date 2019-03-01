@@ -16,6 +16,7 @@ $_['text_method_pb'] = 'Интернет-банк Промсвязьбанка';
 $_['text_method_qiwi'] = 'QIWI Wallet';
 $_['text_method_qp'] = 'Доверительный платеж (Куппи.ру)';
 $_['text_method_mp'] = 'Мобильный терминал';
+$_['text_method_tinkoff_bank'] = 'Интернет-банк Тинькофф';
 $_['text_method_installments'] = 'Заплатить по частям';
 $_['text_method_installments_amount'] = ' (%s ₽ в месяц)';
 $_['bank_cards_title'] = 'Банковские карты';
