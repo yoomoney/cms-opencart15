@@ -227,6 +227,7 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             PaymentMethodType::CASH           => $this->language->get('cash_title'),
             PaymentMethodType::MOBILE_BALANCE => $this->language->get('mobile_balance_title'),
             PaymentMethodType::ALFABANK       => $this->language->get('text_method_alfabank'),
+            PaymentMethodType::TINKOFF_BANK   => $this->language->get('text_method_tinkoff_bank'),
             PaymentMethodType::INSTALLMENTS   => $this->language->get('text_method_installments'),
         );
 

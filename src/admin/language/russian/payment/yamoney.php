@@ -158,6 +158,7 @@ $_['text_method_qiwi']         = 'QIWI Wallet';
 $_['text_method_qp']           = 'Доверительный платеж (Куппи.ру)';
 $_['text_method_mp']           = 'Мобильный терминал';
 $_['text_method_installments'] = 'Заплатить по частям';
+$_['text_method_tinkoff_bank'] = 'Интернет-банк Тинькофф';
 $_['bank_cards_title']         = 'Банковские карты';
 $_['cash_title']               = 'Наличные через терминалы';
 $_['mobile_balance_title']     = 'Баланс мобильного';
