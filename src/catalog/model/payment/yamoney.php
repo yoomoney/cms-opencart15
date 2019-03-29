@@ -169,7 +169,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.1.3',
+                        'module_version' => '1.1.4',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);
@@ -342,9 +342,10 @@ class ModelPaymentYaMoney extends Model
 
         $pay_url = $this->url->link('payment/yamoney/repay', 'order_id='.$orderId, 'SSL');
         $this->load->model('checkout/order');
+        $orderStatusId = $this->config->get('config_order_status_id');
         $this->model_checkout_order->confirm(
             $orderId,
-            1,
+            $orderStatusId,
             '<a href="'.$pay_url.'" class="button">'.$this->language->get('text_repay').'</a>',
             true
         );
@@ -361,10 +362,10 @@ class ModelPaymentYaMoney extends Model
         $this->load->model('account/order');
         $this->load->model('catalog/product');
 
-        if (isset($orderInfo['email'])) {
+        if (!empty($orderInfo['email']) && filter_var($orderInfo['email'], FILTER_VALIDATE_EMAIL)) {
             $builder->setReceiptEmail($orderInfo['email']);
-        } elseif (isset($orderInfo['phone'])) {
-            $builder->setReceiptPhone($orderInfo['phone']);
+        } elseif (!empty($orderInfo['telephone'])) {
+            $builder->setReceiptPhone($orderInfo['telephone']);
         }
         $taxRates              = $this->config->get('ya_kassa_receipt_tax_id');
         $defaultPaymentSubject = $this->config->get('ya_kassa_default_payment_subject');

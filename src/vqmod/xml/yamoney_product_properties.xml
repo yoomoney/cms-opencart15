@@ -43,8 +43,10 @@
         <operation error="skip" info="Add Capture Link">
             <search position="after"><![CDATA[$this->data['layouts'] = $this->model_design_layout->getLayouts();]]></search>
             <add><![CDATA[
-                $res = $this->db->query('SELECT * FROM `'.DB_PREFIX.'ya_money_product_properties` WHERE product_id='.$this->request->get['product_id']);
-                $productProp = $res->row;
+                if(!empty($this->request->get['product_id'])) {
+                    $res = $this->db->query('SELECT * FROM `'.DB_PREFIX.'ya_money_product_properties` WHERE product_id='.$this->request->get['product_id']);
+                    $productProp = $res->row;
+                }
                 $this->data['product_ym_payment_mode'] = !empty($productProp['payment_mode']) ? $productProp['payment_mode'] : '';
                 $this->data['product_ym_payment_subject'] = !empty($productProp['payment_subject']) ? $productProp['payment_subject'] : '';
 
