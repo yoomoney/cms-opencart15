@@ -260,9 +260,9 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             1 => $this->language->get('text_vat_none'),
             2 => '0%',
             3 => '10%',
-            4 => '18%',
+            4 => '20%',
             5 => $this->language->get('text_vat_10'),
-            6 => $this->language->get('text_vat_18'),
+            6 => $this->language->get('text_vat_20'),
         );
     }
 
