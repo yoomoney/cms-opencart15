@@ -164,7 +164,7 @@ $_['mobile_balance_title']     = 'Direct carrier billing';
 
 $_['text_vat_none'] = 'Without VAT';
 $_['text_vat_10']   = 'Applicable rate 10/110';
-$_['text_vat_18']   = 'Applicable rate 18/118';
+$_['text_vat_20']   = 'Applicable rate 20/120';
 
 $_['kassa_hold_setting_label']        = 'Включить отложенную оплату';
 $_['kassa_hold_setting_description']  = 'Если опция включена, платежи с карт проходят в 2 этапа: у клиента сумма замораживается, и вам вручную нужно подтвердить её списание – через панель администратора.  <a href="https://kassa.yandex.ru/holdirovani.html" target="_blank">Подробное описание Холдирования.</a>';

@@ -22,7 +22,7 @@ $_['cash_title'] = 'Cash via payment kiosks';
 $_['mobile_balance_title'] = 'Direct carrier billing';
 $_['text_vat_none'] = 'Without VAT';
 $_['text_vat_10'] = 'Applicable rate  10/110';
-$_['text_vat_18'] = 'Applicable rate  18/118';
+$_['text_vat_20'] = 'Applicable rate  20/120';
 
 
 $_['kassa_page_title_default'] = 'Yandex.Checkout (bank cards, e-money, etc.)';
