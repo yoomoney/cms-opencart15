@@ -1,5 +1,4 @@
 <?php
-
 use YandexCheckout\Client;
 use YandexCheckout\Model\Payment;
 use YandexCheckout\Model\PaymentMethodType;
@@ -169,7 +168,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.1.5',
+                        'module_version' => '1.2.0',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);
@@ -290,6 +289,12 @@ class ModelPaymentYaMoney extends Model
         return (int)$dataSet->row['order_id'];
     }
 
+    /**
+     * @param YandexMoneyPaymentKassa $paymentMethod
+     * @param $orderId
+     *
+     * @return \YandexCheckout\Model\PaymentInterface|null
+     */
     public function getPaymentByOrderId(YandexMoneyPaymentKassa $paymentMethod, $orderId)
     {
         $sql     = 'SELECT * FROM `'.DB_PREFIX.'ya_money_payment` WHERE `order_id` = '.(int)$orderId;
@@ -335,6 +340,28 @@ class ModelPaymentYaMoney extends Model
         }
 
         return $payment;
+    }
+
+    /**
+     * @param $orderId
+     * @param $status
+     * @param $comment
+     *
+     * @return bool
+     */
+    public function updateOrderHistory($orderId, $status, $comment)
+    {
+        $sql = "INSERT INTO ".DB_PREFIX."order_history SET order_id = '".(int)$orderId
+            ."', order_status_id = '".(int)$status."', notify = 0, comment = '"
+            .$this->db->escape($comment)."', date_added = NOW()";
+
+        try {
+            return $this->db->query($sql);
+        } catch (Exception $e) {
+            $this->log('error', $e->getMessage());
+        }
+
+        return false;
     }
 
     public function confirmOrder(YandexMoneyPaymentMethod $paymentMethod, $orderId)
@@ -533,15 +560,33 @@ class ModelPaymentYaMoney extends Model
             $this->client = new Client();
             $this->client->setAuth($paymentMethod->getShopId(), $paymentMethod->getPassword());
             $this->client->setLogger($this);
+            $userAgent = $this->client->getApiClient()->getUserAgent();
+            $userAgent->setCms('OpenCart', VERSION);
+            $userAgent->setModule('PaymentGateway', YandexMoneyPaymentMethod::MODULE_VERSION);
         }
 
         return $this->client;
     }
 
     /**
+     * @param $orderId
+     * @param $status
+     */
+    public function hookOrderStatusChange($orderId, $status)
+    {
+        require_once dirname(__FILE__).'/../../../catalog/model/payment/yamoney/YandexMoneySecondReceipt.php';
+
+        $this->load->model('account/order');
+        $orderInfo = $this->model_account_order->getOrder($orderId);
+
+        $secondReceipt = new YandexMoneySecondReceipt($this);
+        $secondReceipt->sendSecondReceipt($orderInfo, $status);
+    }
+
+    /**
      * @param string $paymentId
      * @param string $status
-     * @param \DateTime|null $capturedAt
+     * @param DateTime|null $capturedAt
      */
     private function updatePaymentStatus($paymentId, $status, $capturedAt = null)
     {
@@ -576,6 +621,10 @@ class ModelPaymentYaMoney extends Model
         return (string)mb_substr($description, 0, Payment::MAX_LENGTH_DESCRIPTION);
     }
 
+    /**
+     * @param $productId
+     * @return mixed
+     */
     public function getPaymentProperties($productId)
     {
         $res         = $this->db->query('SELECT * FROM `'.DB_PREFIX.'ya_money_product_properties` WHERE product_id='.$productId);

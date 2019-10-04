@@ -267,6 +267,7 @@ class ControllerPaymentYaMoney extends Controller
         }
         if ($notification->getEvent() === NotificationEventType::PAYMENT_SUCCEEDED) {
             if ($payment->getStatus() === PaymentStatus::SUCCEEDED) {
+                $this->getModel()->hookOrderStatusChange($orderId, $paymentMethod->getOrderStatusId());
                 $this->getModel()->confirmOrderPayment($orderId, $payment, $paymentMethod->getOrderStatusId());
                 $this->getModel()->log('info', 'Платёж для заказа №'.$orderId.' подтверждён');
                 exit();

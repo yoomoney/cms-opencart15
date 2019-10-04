@@ -377,6 +377,44 @@
                         <p class="help-block"><?php echo $lang->get('ffd_help_message'); ?></p>
                     </div>
 
+                    <!-- Second receipt -->
+
+                    <div class="col-sm-8 col-sm-offset-3">
+                        <p style="padding-top: 8px;">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="hidden"   name="ya_kassa_second_receipt_enable" value="0"/>
+                                    <input type="checkbox" name="ya_kassa_second_receipt_enable" id="ya_kassa_second_receipt_enable" <?= $kassa->isSecondReceiptEnable() ? 'checked' : ''; ?> value="1"/>
+                                    <b><?php echo $lang->get('kassa_second_receipt_header'); ?></b>
+                                </label>
+                            </div>
+                        </p>
+
+                        <p><?php echo $lang->get('kassa_second_receipt_description'); ?></p>
+
+                        <table class="table table-hover">
+                            <tbody>
+                                <tr>
+                                    <td style="border: none">
+                                        <?= $lang->get('kassa_second_receipt_enable_label'); ?>
+                                    </td>
+                                    <td style="border: none">
+                                        <select name="ya_kassa_second_receipt_status" class="form-control col-xl-4 col-md-4" data-toggle="tooltip" data-placement="left" title="">
+                                            <?php foreach ($orderStatusList as $id => $status) : ?>
+                                                    <option value="<?php echo $id; ?>"<?php echo ($id != $kassa->getSecondReceiptStatus() ?: ' selected="selected"'); ?>><?php echo htmlspecialchars($status); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p class="help-block"><?php echo $lang->get('kassa_second_receipt_help_info'); ?></p>
+
+                    </div>
+
+                    <!-- -->
+
                 </div>
                 <!-- -->
             </div>

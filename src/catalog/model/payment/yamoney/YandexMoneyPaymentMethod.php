@@ -4,6 +4,9 @@ use YandexCheckout\Model\PaymentMethodType;
 
 class YandexMoneyPaymentMethod
 {
+    /** @const string */
+    const MODULE_VERSION = '1.2.0';
+
     /** @var int */
     const MODE_NONE = 0;
 
@@ -205,12 +208,31 @@ class YandexMoneyPaymentMethod
     }
 
     /**
+     * @return bool
+     */
+    public function isSecondReceiptEnable()
+    {
+        return (bool)$this->config->get('ya_kassa_second_receipt_enable');
+    }
+
+    /**
+     * @return int
+     */
+    public function getSecondReceiptStatus()
+    {
+        return (int)$this->config->get('ya_kassa_second_receipt_status');
+    }
+
+
+    /**
      * @return int
      */
     public function getHoldOrderStatusId()
     {
         return (int)$this->config->get('ya_kassa_hold_order_status');
     }
+
+
 
     /**
      * @return int

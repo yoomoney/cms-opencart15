@@ -32,6 +32,28 @@
         </operation>
     </file>
 
+    <file name="admin/model/sale/order.php" error="skip">
+        <operation error="skip" info="Add Capture Link">
+            <search position="after"><![CDATA[public function editOrder($order_id, $data) {]]></search>
+            <add><![CDATA[
+            $this->load->model('payment/ya_money');
+            $this->model_payment_ya_money->init($this->config);
+            $this->model_payment_ya_money->hookOrderStatusChange($order_id, $data['order_status_id']);
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/model/sale/order.php" error="skip">
+        <operation error="skip" info="Add Capture Link">
+            <search position="after"><![CDATA[public function addOrderHistory($order_id, $data) {]]></search>
+            <add><![CDATA[
+            $this->load->model('payment/ya_money');
+            $this->model_payment_ya_money->init($this->config);
+            $this->model_payment_ya_money->hookOrderStatusChange($order_id, $data['order_status_id']);
+            ]]></add>
+        </operation>
+    </file>
+
     <file name="catalog/controller/product/product.php" error="skip">
         <operation error="skip" info="Add Credit info flag">
             <search position="replace">
