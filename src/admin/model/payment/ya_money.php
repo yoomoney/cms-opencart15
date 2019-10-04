@@ -1,6 +1,6 @@
 <?php
-
 use YandexCheckout\Client;
+use YandexCheckout\Model\PaymentInterface;
 use YandexCheckout\Request\Payments\Payment\CreateCaptureRequestBuilder;
 
 class ModelPaymentYaMoney extends Model
@@ -83,6 +83,21 @@ class ModelPaymentYaMoney extends Model
                 $log->write('['.$level.'] - '.str_replace($search, $replace, $message));
             }
         }
+    }
+
+    /**
+     * @param $orderId
+     * @param $status
+     */
+    public function hookOrderStatusChange($orderId, $status)
+    {
+        require_once dirname(__FILE__).'/../../../catalog/model/payment/yamoney/YandexMoneySecondReceipt.php';
+
+        $this->load->model('sale/order');
+        $orderInfo = $this->model_sale_order->getOrder($orderId);
+
+        $secondReceipt = new YandexMoneySecondReceipt($this);
+        $secondReceipt->sendSecondReceipt($orderInfo, $status);
     }
 
     /**
@@ -301,7 +316,7 @@ class ModelPaymentYaMoney extends Model
         $connector = new GitHubConnector();
         $fileName  = $connector->downloadRelease($this->repository, $tag, $dir);
         if (empty($fileName)) {
-            $this->log('error', $this->laguage->get('updater_log_text_load_failed'));
+            $this->log('error', $this->language->get('updater_log_text_load_failed'));
 
             return false;
         }
@@ -499,6 +514,8 @@ class ModelPaymentYaMoney extends Model
      */
     public function confirmOrderPayment($orderId, $orderInfo, $payment, $statusId)
     {
+        $this->hookOrderStatusChange($orderId, $statusId);
+
         $sql     = 'UPDATE `'.DB_PREFIX.'order_history` SET `comment` = \'Платёж подтверждён\' WHERE `order_id` = '
                    .(int)$orderId.' AND `order_status_id` <= 1';
         $comment = 'Номер транзакции: '.$payment->getId().'. Сумма: '.$payment->getAmount()->getValue()
@@ -506,21 +523,52 @@ class ModelPaymentYaMoney extends Model
         $this->db->query($sql);
 
         $orderInfo['order_status_id'] = $statusId;
-        $this->updateOrderStatus($orderId, $orderInfo, $comment);
+        $this->updateOrderStatus($orderId, $orderInfo);
+        $this->updateOrderHistory($orderId, $orderInfo['order_status_id'], $comment);
     }
 
-    public function updateOrderStatus($order_id, $order_info, $comment = '')
+    /**
+     * @param $order_id
+     * @param $order_info
+     *
+     * @return bool
+     */
+    public function updateOrderStatus($order_id, $order_info)
     {
         if ($order_info && $order_info['order_status_id']) {
             $sql = "UPDATE `".DB_PREFIX."order` SET order_status_id = '".(int)$order_info['order_status_id']
                    ."', date_modified = NOW() WHERE order_id = '".(int)$order_id."'";
-            $this->db->query($sql);
 
-            $sql = "INSERT INTO ".DB_PREFIX."order_history SET order_id = '".(int)$order_id
-                   ."', order_status_id = '".(int)$order_info['order_status_id']."', notify = 0, comment = '"
-                   .$this->db->escape($comment)."', date_added = NOW()";
-            $this->db->query($sql);
+            try {
+                return $this->db->query($sql);
+            } catch (Exception $e) {
+                $this->log('error', $e->getMessage());
+            }
+
+            return false;
         }
+    }
+
+    /**
+     * @param $orderId
+     * @param $status
+     * @param $comment
+     *
+     * @return bool
+     */
+    public function updateOrderHistory($orderId, $status, $comment)
+    {
+        $sql = "INSERT INTO ".DB_PREFIX."order_history SET order_id = '".(int)$orderId
+            ."', order_status_id = '".(int)$status."', notify = 0, comment = '"
+            .$this->db->escape($comment)."', date_added = NOW()";
+
+        try {
+            return $this->db->query($sql);
+        } catch (Exception $e) {
+            $this->log('error', $e->getMessage());
+        }
+
+        return false;
     }
 
     /**
@@ -585,6 +633,19 @@ class ModelPaymentYaMoney extends Model
         return true;
     }
 
+    /**
+     * @param YandexMoneyPaymentKassa $paymentMethod
+     * @param $orderId
+     * @return PaymentInterface|null
+     * @throws \YandexCheckout\Common\Exceptions\ApiException
+     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
+     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
+     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
+     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
+     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
+     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
+     */
     public function getPaymentByOrderId(YandexMoneyPaymentKassa $paymentMethod, $orderId)
     {
         $sql     = 'SELECT * FROM `'.DB_PREFIX.'ya_money_payment` WHERE `order_id` = '.(int)$orderId;
@@ -604,17 +665,25 @@ class ModelPaymentYaMoney extends Model
      *
      * @return Client
      */
-    private function getClient(YandexMoneyPaymentKassa $paymentMethod)
+    public function getClient(YandexMoneyPaymentKassa $paymentMethod)
     {
         if ($this->client === null) {
             $this->client = new Client();
             $this->client->setAuth($paymentMethod->getShopId(), $paymentMethod->getPassword());
             $this->client->setLogger($this);
+            $userAgent = $this->client->getApiClient()->getUserAgent();
+            $userAgent->setCms('OpenCart', VERSION);
+            $userAgent->setModule('PaymentGateway', YandexMoneyPaymentMethod::MODULE_VERSION);
         }
 
         return $this->client;
     }
 
+    /**
+     * @param $paymentId
+     * @param $status
+     * @param null $capturedAt
+     */
     private function updatePaymentStatus($paymentId, $status, $capturedAt = null)
     {
         $sql = 'UPDATE `'.DB_PREFIX.'ya_money_payment` SET `status` = \''.$status.'\'';

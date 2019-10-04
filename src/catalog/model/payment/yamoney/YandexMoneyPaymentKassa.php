@@ -196,6 +196,8 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             'ya_kassa_hold_order_status',
             'ya_kassa_cancel_order_status',
             'ya_kassa_send_receipt',
+            'ya_kassa_second_receipt_enable',
+            'ya_kassa_second_receipt_status',
             'ya_kassa_receipt_tax_id',
             'ya_kassa_new_order_status',
             'ya_kassa_debug_mode',
@@ -231,9 +233,15 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             PaymentMethodType::INSTALLMENTS   => $this->language->get('text_method_installments'),
         );
 
+        $disabledMethods = array(
+            PaymentMethodType::B2B_SBERBANK,
+            PaymentMethodType::WECHAT,
+        );
+
         $result = array();
+
         foreach (PaymentMethodType::getEnabledValues() as $value) {
-            if ($value !== PaymentMethodType::B2B_SBERBANK) {
+            if (!in_array($value, $disabledMethods)) {
                 $result[$value] = $titles[$value];
             }
         }
