@@ -70,7 +70,6 @@ function renderPayWithYandexButton ($text, $id = '',  $withShadow = false) {
         display:none;
     }
 </style>
-
     <form accept-charset="UTF-8" enctype="application/x-www-form-urlencoded" method="POST" id='YamoneyForm'
           action="<?php echo $paymentMethod->getFormUrl(); ?>">
         <input type="hidden" name="cms_name" value="<?php echo $cmsname; ?>" >
@@ -89,6 +88,7 @@ function renderPayWithYandexButton ($text, $id = '',  $withShadow = false) {
             <?php } ?>
         </div>
     </form>
+    <div id="payment-form"></div>
 <?php
     if ($paymentMethod->isModeKassa()) {
         $isUseOnlyYandexButton = $paymentMethod->useYandexButton() && !$paymentMethod->isAddInstallmentsButton();
@@ -104,6 +104,7 @@ function renderPayWithYandexButton ($text, $id = '',  $withShadow = false) {
     }
 ?>
 
+<script src="https://kassa.yandex.ru/checkout-ui/v2.js"></script>
 <script type="text/javascript"><!--
 jQuery(document).ready(function () {
 
@@ -239,6 +240,11 @@ jQuery(document).ready(function () {
         } else {
             checked = getCheckedValue(form.paymentType);
         }
+
+        createPayment(checked);
+    });
+
+    function createPayment(checked) {
         jQuery.ajax({
             url: "<?php echo $validate_url; ?>",
             dataType: "json",
@@ -250,7 +256,12 @@ jQuery(document).ready(function () {
             },
             success: function (data) {
                 if (data.success) {
-                    document.location = data.redirect;
+                    if (data.token) {
+                        jQuery('#payment-form').empty();
+                        initWidget(data);
+                    } else {
+                        document.location = data.redirect;
+                    }
                 } else {
                     onValidateError(data.error);
                 }
@@ -259,7 +270,34 @@ jQuery(document).ready(function () {
                 onValidateError('Failed to create payment');
             }
         });
-    });
+    }
+
+    function initWidget(data) {
+        const checkout = new window.YandexCheckout({
+            confirmation_token: data.token,
+            return_url: data.redirect,
+            embedded_3ds: true,
+            error_callback(error) {
+                if (error.error === 'token_expired') {
+                    resetToken();
+                    createPayment('widget');
+                }
+            }
+        });
+
+        checkout.render('payment-form');
+    }
+
+    function resetToken() {
+        jQuery.ajax({
+            url: "<?php echo $reset_token_url; ?>",
+            dataType: "json",
+            method: "GET",
+            failure: function () {
+                onValidateError("Failed to reset token");
+            }
+        });
+    }
 
     function onValidateError(errorMessage) {
         var warning = jQuery('#YamoneyForm .warning');

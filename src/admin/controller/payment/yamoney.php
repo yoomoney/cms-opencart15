@@ -22,7 +22,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.2.0';
+    private $moduleVersion = '1.2.1';
 
     /**
      * @var integer
