@@ -1,6 +1,9 @@
 <?php
 
 use YandexCheckout\Client;
+use YandexCheckout\Model\Confirmation\AbstractConfirmation;
+use YandexCheckout\Model\Confirmation\ConfirmationRedirect;
+use YandexCheckout\Model\ConfirmationType;
 use YandexCheckout\Model\Notification\NotificationSucceeded;
 use YandexCheckout\Model\Notification\NotificationWaitingForCapture;
 use YandexCheckout\Model\NotificationEventType;
@@ -33,6 +36,9 @@ class ControllerPaymentYaMoney extends Controller
      */
     protected function index()
     {
+        if (isset($this->session->data['confirmation_token'])) {
+            $this->session->data['confirmation_token'] = null;
+        }
         $this->payment($this->getOrderInfo());
     }
 
@@ -65,17 +71,34 @@ class ControllerPaymentYaMoney extends Controller
             $this->jsonError('Не указан способ оплаты');
         }
         $paymentType = $_GET['paymentType'];
+
+        $successUrl = str_replace(
+            array('&amp;'),
+            array('&'),
+            $this->url->link('payment/yamoney/confirm', 'order_id='.$orderInfo['order_id'], true)
+        );
+
+        if ($paymentType === YandexMoneyPaymentKassa::CUSTOM_PAYMENT_METHOD_WIDGET
+            && !empty($this->session->data['confirmation_token'])) {
+            echo json_encode(array(
+                'success' => true,
+                'redirect' => $successUrl,
+                'token' => $this->session->data['confirmation_token'],
+            ));
+            exit();
+        }
+
         if (!$paymentMethod->getEPL()) {
             if (empty($paymentType)) {
                 $this->jsonError('Не указан способ оплаты');
             } elseif (!$paymentMethod->isPaymentMethodEnabled($paymentType)) {
                 $this->jsonError('Указан неверный способ оплаты');
-            } elseif ($paymentType === \YandexCheckout\Model\PaymentMethodType::QIWI) {
+            } elseif ($paymentType === PaymentMethodType::QIWI) {
                 $phone = isset($_GET['qiwiPhone']) ? preg_replace('/[^\d]/', '', $_GET['qiwiPhone']) : '';
                 if (empty($phone)) {
                     $this->jsonError('Не был указан номер телефона');
                 }
-            } elseif ($paymentType === \YandexCheckout\Model\PaymentMethodType::ALFABANK) {
+            } elseif ($paymentType === PaymentMethodType::ALFABANK) {
                 $login = isset($_GET['alphaLogin']) ? trim($_GET['alphaLogin']) : '';
                 if (empty($login)) {
                     $this->jsonError('Не был указан логин в Альфа-клике');
@@ -85,18 +108,24 @@ class ControllerPaymentYaMoney extends Controller
         $payment = $this->getModel()->createPayment($paymentMethod, $orderInfo);
         if ($payment === null) {
             $this->jsonError('Платеж не прошел. Попробуйте еще или выберите другой способ оплаты');
-        }
+        };
+
         $result = array(
             'success'  => true,
-            'redirect' => $this->url->link('payment/yamoney/confirm', 'order_id='.$orderInfo['order_id'], 'SSL'),
+            'redirect' => $successUrl,
         );
-        /** @var \YandexCheckout\Model\Confirmation\ConfirmationRedirect $confirmation */
+
+        /** @var AbstractConfirmation $confirmation */
         $confirmation = $payment->getConfirmation();
         if ($confirmation === null) {
             $this->getModel()->log('warning', 'Confirmation in created payment equals null');
-        } elseif ($confirmation->getType() === \YandexCheckout\Model\ConfirmationType::REDIRECT) {
+        } elseif ($confirmation->getType() === ConfirmationType::REDIRECT) {
             $result['redirect'] = $confirmation->getConfirmationUrl();
+        } elseif ($confirmation->getType() === ConfirmationType::EMBEDDED) {
+            $result['token'] = $confirmation->getConfirmationToken();
+            $this->session->data['confirmation_token'] = $result['token'];
         }
+
         if ($paymentMethod->getCreateOrderBeforeRedirect()) {
             $this->getModel()->confirmOrder($paymentMethod, $orderInfo['order_id']);
         }
@@ -118,6 +147,10 @@ class ControllerPaymentYaMoney extends Controller
     {
         $paymentMethod = $this->getModel()->getPaymentMethod($this->config->get('ya_mode'));
         if ($paymentMethod instanceof YandexMoneyPaymentKassa) {
+            if (isset($this->session->data['confirmation_token'])) {
+                $this->session->data['confirmation_token'] = null;
+            }
+
             if (!isset($_GET['order_id'])) {
                 $this->errorRedirect('Order id not specified in return link');
             }
@@ -406,7 +439,7 @@ class ControllerPaymentYaMoney extends Controller
         foreach ($paymentMethod->getPaymentMethods() as $method => $name) {
             if ($paymentMethod->isPaymentMethodEnabled($method)) {
                 if ($paymentMethod->isTestMode()) {
-                    if ($method === \YandexCheckout\Model\PaymentMethodType::BANK_CARD || $method === \YandexCheckout\Model\PaymentMethodType::YANDEX_MONEY) {
+                    if ($method === PaymentMethodType::BANK_CARD || $method === PaymentMethodType::YANDEX_MONEY) {
                         $this->data['allow_methods'][$method] = $name;
                     }
                 } else {
@@ -415,6 +448,7 @@ class ControllerPaymentYaMoney extends Controller
             }
         }
         $this->data['validate_url'] = $this->url->link('payment/yamoney/create', '', 'SSL');
+        $this->data['reset_token_url'] = $this->url->link('payment/yamoney/resetToken', '', 'SSL');
 
         if (isset($this->request->server['HTTPS']) && (($this->request->server['HTTPS'] == 'on') || ($this->request->server['HTTPS'] == '1'))) {
             $this->data['imageurl'] = $this->config->get('config_ssl').'image/';
@@ -498,6 +532,19 @@ class ControllerPaymentYaMoney extends Controller
             $this->data['order']                 = $orderInfo;
         }
         $this->renderPage('failure', true);
+    }
+
+    public function resetToken()
+    {
+        $success = false;
+        if (isset($this->session->data['confirmation_token'])) {
+            $this->session->data['confirmation_token'] = null;
+            $success = true;
+        }
+
+        echo json_encode(array(
+            'success' => $success,
+        ));
     }
 
     public function renderPage($template, $child = false)

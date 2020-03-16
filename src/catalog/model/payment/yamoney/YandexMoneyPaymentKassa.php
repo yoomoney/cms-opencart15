@@ -238,7 +238,9 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
             PaymentMethodType::WECHAT,
         );
 
-        $result = array();
+        $result = array(
+            self::CUSTOM_PAYMENT_METHOD_WIDGET => $this->language->get('text_method_widget'),
+        );
 
         foreach (PaymentMethodType::getEnabledValues() as $value) {
             if (!in_array($value, $disabledMethods)) {

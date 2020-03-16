@@ -1,7 +1,11 @@
 <?php
 use YandexCheckout\Client;
+use YandexCheckout\Model\ConfirmationType;
 use YandexCheckout\Model\Payment;
+use YandexCheckout\Model\PaymentInterface;
 use YandexCheckout\Model\PaymentMethodType;
+use YandexCheckout\Model\Receipt;
+use YandexCheckout\Request\Payments\CreatePaymentRequest;
 use YandexCheckout\Request\Payments\CreatePaymentRequestBuilder;
 
 require_once dirname(__FILE__).'/yamoney/autoload.php';
@@ -108,7 +112,7 @@ class ModelPaymentYaMoney extends Model
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param $payments
      *
-     * @return \YandexCheckout\Model\PaymentInterface[]
+     * @return PaymentInterface[]
      */
     public function updatePaymentsStatuses(YandexMoneyPaymentKassa $paymentMethod, $payments)
     {
@@ -147,7 +151,7 @@ class ModelPaymentYaMoney extends Model
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param $orderInfo
      *
-     * @return \YandexCheckout\Model\PaymentInterface
+     * @return PaymentInterface
      */
     public function createPayment(YandexMoneyPaymentKassa $paymentMethod, $orderInfo)
     {
@@ -156,7 +160,7 @@ class ModelPaymentYaMoney extends Model
         $paymentType = !empty($_GET['paymentType']) ? $_GET['paymentType'] : '';
 
         try {
-            $builder = \YandexCheckout\Request\Payments\CreatePaymentRequest::builder();
+            $builder = CreatePaymentRequest::builder();
             $amount  = $this->currency->format($orderInfo['total'], 'RUB', '', false);
 
             $builder->setAmount($amount)
@@ -168,13 +172,13 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.2.0',
+                        'module_version' => '1.2.1',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);
             }
             $confirmation = array(
-                'type'      => \YandexCheckout\Model\ConfirmationType::REDIRECT,
+                'type'      => ConfirmationType::REDIRECT,
                 'returnUrl' => str_replace(
                     array('&amp;'),
                     array('&'),
@@ -183,17 +187,20 @@ class ModelPaymentYaMoney extends Model
             );
 
             if ($paymentType) {
-                if ($paymentType === \YandexCheckout\Model\PaymentMethodType::QIWI) {
+                if ($paymentType === PaymentMethodType::QIWI) {
                     $paymentType = array(
                         'type'  => $paymentType,
                         'phone' => preg_replace('/[^\d]/', '', $_GET['qiwiPhone']),
                     );
-                } elseif ($paymentType === \YandexCheckout\Model\PaymentMethodType::ALFABANK) {
+                } elseif ($paymentType === PaymentMethodType::ALFABANK) {
                     $paymentType  = array(
                         'type'  => $paymentType,
                         'login' => $_GET['alphaLogin'],
                     );
-                    $confirmation = \YandexCheckout\Model\ConfirmationType::EXTERNAL;
+                    $confirmation = ConfirmationType::EXTERNAL;
+                } elseif ($paymentType === YandexMoneyPaymentKassa::CUSTOM_PAYMENT_METHOD_WIDGET) {
+                    $confirmation = ConfirmationType::EMBEDDED;
+                    $paymentType = null;
                 }
                 $builder->setPaymentMethodData($paymentType);
             }
@@ -201,7 +208,7 @@ class ModelPaymentYaMoney extends Model
 
             $request = $builder->build();
             $receipt = $request->getReceipt();
-            if ($receipt instanceof \YandexCheckout\Model\Receipt) {
+            if ($receipt instanceof Receipt) {
                 $receipt->normalize($request->getAmount());
             }
         } catch (InvalidArgumentException $e) {
@@ -273,7 +280,7 @@ class ModelPaymentYaMoney extends Model
     }
 
     /**
-     * @param \YandexCheckout\Model\PaymentInterface $payment
+     * @param PaymentInterface $payment
      *
      * @return int
      */
@@ -293,7 +300,7 @@ class ModelPaymentYaMoney extends Model
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param $orderId
      *
-     * @return \YandexCheckout\Model\PaymentInterface|null
+     * @return PaymentInterface|null
      */
     public function getPaymentByOrderId(YandexMoneyPaymentKassa $paymentMethod, $orderId)
     {
@@ -449,7 +456,7 @@ class ModelPaymentYaMoney extends Model
 
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
-     * @param \YandexCheckout\Model\PaymentInterface $payment
+     * @param PaymentInterface $payment
      *
      * @return bool
      */
@@ -476,7 +483,7 @@ class ModelPaymentYaMoney extends Model
 
     /**
      * @param int $orderId
-     * @param \YandexCheckout\Model\PaymentInterface $payment
+     * @param PaymentInterface $payment
      * @param int $statusId
      */
     public function confirmOrderPayment($orderId, $payment, $statusId)
