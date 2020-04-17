@@ -22,7 +22,7 @@ function yandexMoneyLoadClass($className)
     }
     $path .= '.php';
     if (file_exists($path)) {
-        include $path;
+        include_once $path;
     }
 }
 

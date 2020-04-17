@@ -2,7 +2,6 @@
 
 use YandexCheckout\Client;
 use YandexCheckout\Model\Confirmation\AbstractConfirmation;
-use YandexCheckout\Model\Confirmation\ConfirmationRedirect;
 use YandexCheckout\Model\ConfirmationType;
 use YandexCheckout\Model\Notification\NotificationSucceeded;
 use YandexCheckout\Model\Notification\NotificationWaitingForCapture;

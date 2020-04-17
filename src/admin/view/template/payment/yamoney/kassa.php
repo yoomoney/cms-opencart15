@@ -5,6 +5,8 @@
  * @var Language $lang
  */
 
+use YandexCheckout\Model\PaymentMethodType;
+
 ?>
 <div role="tabpanel" class="tab-pane active" id="kassa">
     <div class="row">
@@ -100,7 +102,7 @@
                     <div class="col-sm-9 col-sm-offset-3 selectPayOpt">
                         <p style="margin: 15px 0 0;"><?php echo $lang->get('kassa_payment_method_label'); ?></p>
                         <?php foreach ($kassa->getPaymentMethods() as $val => $name) : ?>
-                            <?php if ($kassa->isTestMode() && !in_array($val, array(\YandexCheckout\Model\PaymentMethodType::YANDEX_MONEY, \YandexCheckout\Model\PaymentMethodType::BANK_CARD))) continue; ?>
+                            <?php if ($kassa->isTestMode() && !in_array($val, array(PaymentMethodType::YANDEX_MONEY, PaymentMethodType::BANK_CARD))) continue; ?>
                             <div class="checkbox">
                                 <label>
                                     <input name="ya_kassa_payment_options[]" class="cls_ya_paymentOpt" type="checkbox"
@@ -123,6 +125,35 @@
         </div>
     </div>
 
+        <!-- Currency Start-->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label" for="ym-kassa-currency"><?= $lang->get('kassa_currency')?></label>
+                        <div class="col-sm-4">
+                            <select id="ym-kassa-currency" name="ym_kassa_currency" class="form-control">
+                                <?php foreach ($kassa_currencies as $code => $data): ?>
+                                    <option value="<?= $code ?>"<?= $kassa->getCurrency() == $code ? ' selected' : '' ?>><?= $data['code'] ?> (<?= $data['title'] ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="help-block"><?= $lang->get('kassa_currency_help')?></p>
+                        </div>
+                        <div class="col-sm-5">
+                            <label class="form-check-label">
+                                <input type="checkbox" name="ym_kassa_currency_convert" value="on"
+                                       id="currency_convert"
+                                       class="form-check-input"<?= $kassa->getCurrencyConvert() ? ' checked' : '' ?> />
+                                <?= $lang->get('kassa_currency_convert')?>
+                            </label>
+                            <p class="help-block"><?= $lang->get('kassa_currency_convert_help')?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sbbol Start-->
         <div class="row">
             <div class="col-md-12">
                 <div class="form-horizontal">

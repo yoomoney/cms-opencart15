@@ -1,6 +1,7 @@
 <?php
 
 use YandexCheckout\Client;
+use YandexCheckout\Model\CurrencyCode;
 use YandexCheckout\Model\PaymentData\B2b\Sberbank\VatDataRate;
 use YandexCheckout\Model\PaymentData\B2b\Sberbank\VatDataType;
 use YandexCheckout\Model\PaymentMethodType;
@@ -48,6 +49,11 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
     protected $defaultPaymentMode;
     protected $defaultPaymentSubject;
 
+    /** @var string */
+    protected $currency;
+
+    /** @var string|bool */
+    protected $currency_convert;
 
     public $language;
 
@@ -100,6 +106,9 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
 
         $this->defaultPaymentMode    = $config->get('ya_kassa_default_payment_mode');
         $this->defaultPaymentSubject = $config->get('ya_kassa_default_payment_subject');
+
+        $this->currency              = $config->get('ym_kassa_currency');
+        $this->currency_convert      = $config->get('ym_kassa_currency_convert');
     }
 
     /**
@@ -476,5 +485,21 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
     public function getDefaultPaymentSubject()
     {
         return $this->defaultPaymentSubject;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrency()
+    {
+        return $this->currency ?: CurrencyCode::RUB;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getCurrencyConvert()
+    {
+        return $this->currency_convert == 'on';
     }
 }

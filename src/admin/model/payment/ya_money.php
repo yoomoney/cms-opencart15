@@ -1,7 +1,25 @@
 <?php
+
 use YandexCheckout\Client;
+use YandexCheckout\Common\Exceptions\ApiException;
+use YandexCheckout\Common\Exceptions\BadApiRequestException;
+use YandexCheckout\Common\Exceptions\ExtensionNotFoundException;
+use YandexCheckout\Common\Exceptions\ForbiddenException;
+use YandexCheckout\Common\Exceptions\InternalServerError;
+use YandexCheckout\Common\Exceptions\NotFoundException;
+use YandexCheckout\Common\Exceptions\ResponseProcessingException;
+use YandexCheckout\Common\Exceptions\TooManyRequestsException;
+use YandexCheckout\Common\Exceptions\UnauthorizedException;
 use YandexCheckout\Model\PaymentInterface;
+use YandexCheckout\Model\PaymentStatus;
+use YandexCheckout\Model\Receipt;
+use YandexCheckout\Request\Payments\Payment\CreateCaptureRequest;
 use YandexCheckout\Request\Payments\Payment\CreateCaptureRequestBuilder;
+use YandexMoney\Updater\Archive\BackupZip;
+use YandexMoney\Updater\Archive\RestoreZip;
+use YandexMoney\Updater\ProjectStructure\ProjectStructureReader;
+
+require_once dirname(__FILE__) . '/../../../catalog/model/payment/yamoney/autoload.php';
 
 class ModelPaymentYaMoney extends Model
 {
@@ -74,7 +92,7 @@ class ModelPaymentYaMoney extends Model
             if (!empty($context)) {
                 foreach ($context as $key => $value) {
                     $search[]  = '{'.$key.'}';
-                    $replace[] = $value;
+                    $replace[] = (is_array($value)||is_object($value)) ? json_encode($value, JSON_PRETTY_PRINT) : $value;
                 }
             }
             if (empty($search)) {
@@ -91,7 +109,7 @@ class ModelPaymentYaMoney extends Model
      */
     public function hookOrderStatusChange($orderId, $status)
     {
-        require_once dirname(__FILE__).'/../../../catalog/model/payment/yamoney/YandexMoneySecondReceipt.php';
+        require_once YANDEX_MONEY_MODULE_PATH . '/YandexMoneySecondReceipt.php';
 
         $this->load->model('sale/order');
         $orderInfo = $this->model_sale_order->getOrder($orderId);
@@ -106,12 +124,10 @@ class ModelPaymentYaMoney extends Model
     public function getPaymentMethods()
     {
         if ($this->paymentMethods === null) {
-            $path = dirname(__FILE__).'/../../../catalog/model/payment/yamoney/';
-            require_once $path.'autoload.php';
-            require_once $path.'YandexMoneyPaymentMethod.php';
-            require_once $path.'YandexMoneyPaymentKassa.php';
-            require_once $path.'YandexMoneyPaymentMoney.php';
-            require_once $path.'YandexMoneyPaymentBilling.php';
+            require_once YANDEX_MONEY_MODULE_PATH . '/YandexMoneyPaymentMethod.php';
+            require_once YANDEX_MONEY_MODULE_PATH . '/YandexMoneyPaymentKassa.php';
+            require_once YANDEX_MONEY_MODULE_PATH . '/YandexMoneyPaymentMoney.php';
+            require_once YANDEX_MONEY_MODULE_PATH . '/YandexMoneyPaymentBilling.php';
             $this->paymentMethods = array(
                 YandexMoneyPaymentMethod::MODE_NONE    => new YandexMoneyPaymentMethod($this->config),
                 YandexMoneyPaymentMethod::MODE_KASSA   => new YandexMoneyPaymentKassa($this->config, $this->language),
@@ -175,7 +191,7 @@ class ModelPaymentYaMoney extends Model
         $this->preventDirectories();
 
         $sourceDirectory = dirname(realpath(DIR_CATALOG));
-        $reader          = new \YandexMoney\Updater\ProjectStructure\ProjectStructureReader();
+        $reader          = new ProjectStructureReader();
         $root            = $reader->readFile(dirname(__FILE__).'/yamoney/opencart.map', $sourceDirectory);
 
         $rootDir  = $version.'-'.time();
@@ -192,7 +208,7 @@ class ModelPaymentYaMoney extends Model
 
         try {
             $fileName = $dir.'/'.$fileName;
-            $archive  = new \YandexMoney\Updater\Archive\BackupZip($fileName, $rootDir);
+            $archive  = new BackupZip($fileName, $rootDir);
             $archive->backup($root);
         } catch (Exception $e) {
             $this->log('error', 'Failed to create backup: '.$e->getMessage());
@@ -217,7 +233,7 @@ class ModelPaymentYaMoney extends Model
 
         try {
             $sourceDirectory = dirname(realpath(DIR_CATALOG));
-            $archive         = new \YandexMoney\Updater\Archive\RestoreZip($fileName);
+            $archive         = new RestoreZip($fileName);
             $archive->restore('file_map.map', $sourceDirectory);
         } catch (Exception $e) {
             $this->log('error', $e->getMessage());
@@ -334,7 +350,7 @@ class ModelPaymentYaMoney extends Model
 
         try {
             $sourceDirectory = dirname(realpath(DIR_CATALOG));
-            $archive         = new \YandexMoney\Updater\Archive\RestoreZip($fileName);
+            $archive         = new RestoreZip($fileName);
             $archive->restore('opencart.map', $sourceDirectory);
         } catch (Exception $e) {
             $this->log('error', $e->getMessage());
@@ -471,7 +487,7 @@ class ModelPaymentYaMoney extends Model
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param $payments
      *
-     * @return \YandexCheckout\Model\PaymentInterface[]
+     * @return PaymentInterface[]
      */
     public function updatePaymentsStatuses(YandexMoneyPaymentKassa $paymentMethod, $payments)
     {
@@ -480,8 +496,8 @@ class ModelPaymentYaMoney extends Model
         $this->getPaymentMethods();
         $client   = $this->getClient($paymentMethod);
         $statuses = array(
-            \YandexCheckout\Model\PaymentStatus::PENDING,
-            \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE,
+            PaymentStatus::PENDING,
+            PaymentStatus::WAITING_FOR_CAPTURE,
         );
         foreach ($payments as $payment) {
             if (in_array($payment['status'], $statuses)) {
@@ -489,7 +505,7 @@ class ModelPaymentYaMoney extends Model
                     $paymentObject = $client->getPaymentInfo($payment['payment_id']);
                     if ($paymentObject === null) {
                         $this->updatePaymentStatus($payment['payment_id'],
-                            \YandexCheckout\Model\PaymentStatus::CANCELED);
+                            PaymentStatus::CANCELED);
                     } else {
                         $result[] = $paymentObject;
                         if ($paymentObject->getStatus() !== $payment['status']) {
@@ -509,7 +525,7 @@ class ModelPaymentYaMoney extends Model
     /**
      * @param int $orderId
      * @param array $orderInfo
-     * @param \YandexCheckout\Model\PaymentInterface $payment
+     * @param PaymentInterface $payment
      * @param int $statusId
      */
     public function confirmOrderPayment($orderId, $orderInfo, $payment, $statusId)
@@ -573,7 +589,7 @@ class ModelPaymentYaMoney extends Model
 
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
-     * @param \YandexCheckout\Model\PaymentInterface $payment
+     * @param PaymentInterface $payment
      * @param $order
      *
      * @return bool
@@ -582,13 +598,13 @@ class ModelPaymentYaMoney extends Model
     {
         $client = $this->getClient($paymentMethod);
         try {
-            $builder = \YandexCheckout\Request\Payments\Payment\CreateCaptureRequest::builder();
+            $builder = CreateCaptureRequest::builder();
             $amount  = $this->currency->format($order['total'], 'RUB', '', false);
             $builder->setAmount($amount);
             $this->setReceiptItems($builder, $order);
             $request = $builder->build();
             $receipt = $request->getReceipt();
-            if ($receipt instanceof \YandexCheckout\Model\Receipt) {
+            if ($receipt instanceof Receipt) {
                 $receipt->normalize($request->getAmount());
             }
             $result = $client->capturePayment($request, $payment->getId());
@@ -609,7 +625,7 @@ class ModelPaymentYaMoney extends Model
 
     /**
      * @param YandexMoneyPaymentKassa $paymentMethod
-     * @param \YandexCheckout\Model\PaymentInterface $payment
+     * @param PaymentInterface $payment
      *
      * @return bool
      */
@@ -637,14 +653,14 @@ class ModelPaymentYaMoney extends Model
      * @param YandexMoneyPaymentKassa $paymentMethod
      * @param $orderId
      * @return PaymentInterface|null
-     * @throws \YandexCheckout\Common\Exceptions\ApiException
-     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
-     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
-     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
-     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
-     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
-     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
-     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
+     * @throws ApiException
+     * @throws BadApiRequestException
+     * @throws ForbiddenException
+     * @throws InternalServerError
+     * @throws NotFoundException
+     * @throws ResponseProcessingException
+     * @throws TooManyRequestsException
+     * @throws UnauthorizedException|ExtensionNotFoundException
      */
     public function getPaymentByOrderId(YandexMoneyPaymentKassa $paymentMethod, $orderId)
     {
@@ -690,7 +706,7 @@ class ModelPaymentYaMoney extends Model
         if ($capturedAt !== null) {
             $sql .= ', `captured_at`=\''.$capturedAt->format('Y-m-d H:i:s').'\'';
         }
-        if ($status !== \YandexCheckout\Model\PaymentStatus::CANCELED && $status !== \YandexCheckout\Model\PaymentStatus::PENDING) {
+        if ($status !== PaymentStatus::CANCELED && $status !== PaymentStatus::PENDING) {
             $sql .= ', `paid`=\'Y\'';
         }
         $sql .= ' WHERE `payment_id`=\''.$paymentId.'\'';
