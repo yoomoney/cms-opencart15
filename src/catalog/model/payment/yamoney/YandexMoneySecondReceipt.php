@@ -1,4 +1,5 @@
 <?php
+
 use YandexCheckout\Client;
 use YandexCheckout\Model\PaymentInterface;
 use YandexCheckout\Model\Receipt\PaymentMode;
@@ -9,7 +10,6 @@ use YandexCheckout\Model\Settlement;
 use YandexCheckout\Request\Receipts\CreatePostReceiptRequest;
 use YandexCheckout\Request\Receipts\ReceiptResponseInterface;
 use YandexCheckout\Request\Receipts\ReceiptResponseItemInterface;
-use YandexCheckout\Request\Receipts\ReceiptsResponse;
 
 /**
  * Class YandexMoneySecondReceipt

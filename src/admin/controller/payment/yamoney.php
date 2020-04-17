@@ -1,5 +1,7 @@
 <?php
 
+use YandexCheckout\Model\CurrencyCode;
+
 /**
  * Class ControllerPaymentYaMoney
  *
@@ -22,7 +24,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.2.1';
+    private $moduleVersion = '1.3.0';
 
     /**
      * @var integer
@@ -94,6 +96,8 @@ class ControllerPaymentYaMoney extends Controller
             'token='.$this->session->data['token'], 'SSL');
         $this->data['kassa_payments_link'] = $this->url->link('payment/yamoney/payments',
             'token='.$this->session->data['token'], 'SSL');
+
+        $this->data['kassa_currencies'] = $this->createKassaCurrencyList();
 
         $this->data['orderStatusList'] = $this->getValidOrderStatusList();
         $this->data['geoZoneList']     = $this->getValidGeoZoneList();
@@ -669,6 +673,9 @@ class ControllerPaymentYaMoney extends Controller
             }
         }
 
+        $settings['ym_kassa_currency']                     = isset($data['ym_kassa_currency']) ? $data['ym_kassa_currency'] : CurrencyCode::RUB;
+        $settings['ym_kassa_currency_convert']             = isset($data['ym_kassa_currency_convert']) ? $data['ym_kassa_currency_convert'] : "";
+
         $settings['ya_kassa_b2b_sberbank_enabled']         = isset($data['ya_kassa_b2b_sberbank_enabled']) ? $data['ya_kassa_b2b_sberbank_enabled'] : "";
         $settings['ya_kassa_b2b_sberbank_payment_purpose'] = isset($data['ya_kassa_b2b_sberbank_payment_purpose']) ? $data['ya_kassa_b2b_sberbank_payment_purpose'] : "";
         $settings['ya_kassa_b2b_tax_rate_default']         = isset($data['ya_kassa_b2b_tax_rate_default']) ? $data['ya_kassa_b2b_tax_rate_default'] : "";
@@ -821,5 +828,31 @@ class ControllerPaymentYaMoney extends Controller
         }
 
         $this->data['backups'] = $this->getModel()->getBackupList();
+    }
+
+
+    /**
+     * @return array
+     */
+    private function createKassaCurrencyList()
+    {
+        $this->load->model('localisation/currency');
+        $all_currencies = $this->model_localisation_currency->getCurrencies();
+        $kassa_currencies = CurrencyCode::getEnabledValues();
+
+        $available_currencies = array_filter($all_currencies, function ($item, $key) use ($kassa_currencies) {
+            return in_array($key, $kassa_currencies) && $item['status'] == 1;
+        }, ARRAY_FILTER_USE_BOTH);
+
+        return array_merge(array(
+            'RUB' => array(
+                'title' => 'Российский рубль',
+                'code' => CurrencyCode::RUB,
+                'symbol_left' => '',
+                'symbol_right' => '₽',
+                'decimal_place' => '2',
+                'status' => '1',
+            )
+        ), $available_currencies);
     }
 }

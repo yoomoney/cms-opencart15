@@ -2,11 +2,11 @@
 
 namespace YandexMoney\Updater\Archive;
 
+use RuntimeException;
 use YandexMoney\Updater\ProjectStructure\DirectoryEntryInterface;
 use YandexMoney\Updater\ProjectStructure\FileEntryInterface;
 use YandexMoney\Updater\ProjectStructure\ProjectStructureWriter;
 use ZipArchive;
-use RuntimeException;
 
 /**
  * Класс для сохранения бэкапа проекта в zip архив

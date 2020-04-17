@@ -93,6 +93,11 @@ $_['kassa_notification_url_label']          = 'Address for notifications';
 $_['kassa_notification_url_description']    = 'Only required if Yandex.Checkout\'s specialists ask for it';
 $_['kassa_page_title_default']              = 'Yandex.Checkout (bank cards, e-money, etc.)';
 
+$_['kassa_currency']                     = 'The payment currency in the Yandex.Checkout';
+$_['kassa_currency_convert']             = 'Convert an amount from the store\'s current currency';
+$_['kassa_currency_help']                = 'Currency must match in the Yandex.Checkout and in the store';
+$_['kassa_currency_convert_help']        = 'A value from the store\'s currency list is used. If the currency is not in the list – the exchange rate of the Central Bank of the Russian Federation.';
+
 $_['wallet_tab_label']                = 'Yandex.Money';
 $_['wallet_header_description']       = '';
 $_['wallet_enable']                   = 'Enable payment acceptance to the Yandex.Money Wallet';
