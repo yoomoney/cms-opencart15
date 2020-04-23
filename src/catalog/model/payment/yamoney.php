@@ -191,7 +191,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.3.1',
+                        'module_version' => '1.3.2',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);
@@ -567,6 +567,12 @@ class ModelPaymentYaMoney extends Model
             if (empty($search)) {
                 $log->write('['.$level.'] ['.$userId.'] ['.$sessionId.'] - '.$message);
             } else {
+                foreach ($search as $object) {
+                    if (stripos($message, $object) === false) {
+                        $label = trim($object, "{}");
+                        $message .= " \n{$label}: {$object}";
+                    }
+                }
                 $log->write(
                     '['.$level.'] ['.$userId.'] ['.$sessionId.'] - '
                     .str_replace($search, $replace, $message)

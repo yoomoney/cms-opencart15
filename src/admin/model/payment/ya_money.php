@@ -98,6 +98,12 @@ class ModelPaymentYaMoney extends Model
             if (empty($search)) {
                 $log->write('['.$level.'] - '.$message);
             } else {
+                foreach ($search as $object) {
+                    if (stripos($message, $object) === false) {
+                        $label = trim($object, "{}");
+                        $message .= " \n{$label}: {$object}";
+                    }
+                }
                 $log->write('['.$level.'] - '.str_replace($search, $replace, $message));
             }
         }
