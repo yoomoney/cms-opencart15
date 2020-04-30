@@ -5,7 +5,7 @@ use YandexCheckout\Model\PaymentMethodType;
 class YandexMoneyPaymentMethod
 {
     /** @const string */
-    const MODULE_VERSION = '1.3.2';
+    const MODULE_VERSION = '1.3.3';
 
     /**
      * @const string

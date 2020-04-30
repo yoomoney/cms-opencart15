@@ -24,7 +24,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.3.2';
+    private $moduleVersion = '1.3.3';
 
     /**
      * @var integer
@@ -840,9 +840,12 @@ class ControllerPaymentYaMoney extends Controller
         $all_currencies = $this->model_localisation_currency->getCurrencies();
         $kassa_currencies = CurrencyCode::getEnabledValues();
 
-        $available_currencies = array_filter($all_currencies, function ($item, $key) use ($kassa_currencies) {
-            return in_array($key, $kassa_currencies) && $item['status'] == 1;
-        }, ARRAY_FILTER_USE_BOTH);
+        $available_currencies = array();
+        foreach ($all_currencies as $key => $item) {
+            if (in_array($key, $kassa_currencies) && $item['status'] == 1) {
+                $available_currencies[$key] = $item;
+            }
+        }
 
         return array_merge(array(
             'RUB' => array(
