@@ -186,19 +186,19 @@ class ControllerPaymentYaMoney extends Controller
             $this->redirect($redirectUrl);
 
         } elseif ($paymentMethod instanceof YandexMoneyPaymentMoney) {
-            $this->getModel()->log('debug', 'Wallet payment');
+            $this->getModel()->log('info', 'Wallet payment');
             if (isset($this->session->data['order_id'])) {
                 if ($paymentMethod->getCreateOrderBeforeRedirect()) {
                     $orderId = $this->session->data['order_id'];
                     $this->load->model('checkout/order');
                     $orderInfo = $this->model_checkout_order->getOrder($orderId);
                     if ($orderInfo['order_status_id'] <= 0) {
-                        $this->getModel()->log('debug', 'Wallet create payment');
+                        $this->getModel()->log('info', 'Wallet create payment');
                         $this->getModel()->confirmOrder($paymentMethod, $orderId);
                     }
                 }
                 if ($paymentMethod->getClearCartBeforeRedirect()) {
-                    $this->getModel()->log('debug', 'Wallet clear cart');
+                    $this->getModel()->log('info', 'Wallet clear cart');
                     $this->cart->clear();
                 }
             }
@@ -230,7 +230,7 @@ class ControllerPaymentYaMoney extends Controller
             exit();
         }
 
-        $this->getModel()->log('debug', 'Notification: '.$data);
+        $this->getModel()->log('info', 'Notification: '.$data);
 
         /** @var YandexMoneyPaymentKassa $paymentMethod */
         $paymentMethod = $this->getModel()->getPaymentMethod($this->config->get('ya_mode'));
