@@ -161,7 +161,7 @@ class ModelPaymentYaMoney extends Model
         $paymentType = !empty($_GET['paymentType']) ? $_GET['paymentType'] : '';
 
         $kassaCurrency = $paymentMethod->getCurrency();
-        $this->log('debug', "AMOUNT CALC \n{data}", array(
+        $this->log('info', "Amount calc \n{data}", array(
             'data' => json_encode(array(
                 'order_total' => $orderInfo['total'],
                 'kassa_currency' => $kassaCurrency,
@@ -191,7 +191,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.3.3',
+                        'module_version' => '1.3.4',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);
@@ -677,7 +677,7 @@ class ModelPaymentYaMoney extends Model
             $cbrf = new CBRAgent();
             $courses = $cbrf->getList();
             $this->cache->set('cbrf_courses', $courses);
-            $this->log('debug', "Get CBRF courses \n{courses}", array('courses' => $courses));
+            $this->log('info', "Get CBRF courses \n{courses}", array('courses' => $courses));
         }
         return $courses;
     }

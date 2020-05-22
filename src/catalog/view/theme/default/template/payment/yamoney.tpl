@@ -109,21 +109,25 @@ function renderPayWithYandexButton ($text, $id = '',  $withShadow = false) {
 jQuery(document).ready(function () {
 
 <?php if ($paymentMethod->isModeMoney()): ?>
+    var form = jQuery("#YamoneyForm");
 
-    jQuery('#button-confirm').bind('click', function(e) {
+    jQuery('#button-confirm').off('click').on('click', function(e) {
+        e.preventDefault();
         jQuery.ajax({
             type: 'get',
             url: 'index.php?route=payment/yamoney/confirm'
         });
-        jQuery("#YamoneyForm").submit();
+        form.submit();
     });
-    jQuery('input[name=paymentType]').bind('click', function() {
+
+    jQuery('input[name=paymentType]').off('click').on('click', function(e) {
+        e.preventDefault();
         if (jQuery('input[name=paymentType]:checked').val()=='MP'){
             var textMpos='<?php echo $mpos_page_url; ?>';
-            jQuery("#YamoneyForm").attr('action', textMpos.replace(/&amp;/g, '&'));
+            form.attr('action', textMpos.replace(/&amp;/g, '&'));
 
         } else {
-            jQuery("#YamoneyForm").attr('action', '<?php echo $paymentMethod->getFormUrl(); ?>');
+            form.attr('action', '<?php echo $paymentMethod->getFormUrl(); ?>');
         }
     });
 
@@ -192,7 +196,8 @@ jQuery(document).ready(function () {
                 language: "<?=$paymentMethod->i18n('language_code');?>"
             });
             const checkoutCreditButton = checkoutCreditUI({type: 'button', domSelector: '.ya_kassa_installments_button_container'});
-            checkoutCreditButton.on('click', function () {
+            checkoutCreditButton.off('click').on('click', function (e) {
+                e.preventDefault();
                 jQuery.ajax({
                     url: "<?php echo $validate_url; ?>",
                     dataType: "json",
@@ -226,20 +231,15 @@ jQuery(document).ready(function () {
     <?php endif; ?>
 
     var paymentType = jQuery('input[name=paymentType]');
-    paymentType.change(function () {
+    paymentType.off('change').on('change', function (e) {
         var id = '#payment-' + jQuery(this).val();
         jQuery('.additional').css('display', 'none');
         jQuery(id).css('display', 'table-row');
     });
 
-    jQuery('#button-confirm, #YamoneyFormSubmit').bind('click', function () {
-        var form = jQuery("#YamoneyForm")[0];
-        var checked;
-        if (form.paymentType.value !== undefined) {
-            checked = form.paymentType.value;
-        } else {
-            checked = getCheckedValue(form.paymentType);
-        }
+    jQuery('#button-confirm<?= $paymentMethod->useYandexButton() ? ', #YamoneyFormSubmit':'' ?>').off('click').on('click', function (e) {
+        e.preventDefault();
+        var checked = jQuery('input[name=paymentType]:checked').val();
 
         createPayment(checked);
     });
