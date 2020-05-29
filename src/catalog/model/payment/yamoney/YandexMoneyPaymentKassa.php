@@ -126,7 +126,7 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
      */
     public function getEPL()
     {
-        return !$this->testMode && $this->epl;
+        return $this->epl;
     }
 
     /**

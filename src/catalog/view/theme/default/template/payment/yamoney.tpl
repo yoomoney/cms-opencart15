@@ -196,8 +196,7 @@ jQuery(document).ready(function () {
                 language: "<?=$paymentMethod->i18n('language_code');?>"
             });
             const checkoutCreditButton = checkoutCreditUI({type: 'button', domSelector: '.ya_kassa_installments_button_container'});
-            checkoutCreditButton.off('click').on('click', function (e) {
-                e.preventDefault();
+            checkoutCreditButton.on('click', function () {
                 jQuery.ajax({
                     url: "<?php echo $validate_url; ?>",
                     dataType: "json",
@@ -241,10 +240,21 @@ jQuery(document).ready(function () {
         e.preventDefault();
         var checked = jQuery('input[name=paymentType]:checked').val();
 
-        createPayment(checked);
+        createPayment(checked, jQuery(this));
     });
 
-    function createPayment(checked) {
+    function buttonAction(button, action) {
+        if (action === 'loading') {
+            jQuery(button).attr('disabled', true);
+            jQuery(button).before('<span class="wait"><img src="catalog/view/theme/default/image/loading.gif" alt="" /></span>');
+        } else if (action === 'reset') {
+            jQuery(button).attr('disabled', false);
+            jQuery('.wait, .error').remove();
+        }
+    }
+
+    function createPayment(checked, button) {
+        button = button || null;
         jQuery.ajax({
             url: "<?php echo $validate_url; ?>",
             dataType: "json",
@@ -253,6 +263,12 @@ jQuery(document).ready(function () {
                 paymentType: checked,
                 qiwiPhone: jQuery('input[name=qiwiPhone]').val(),
                 alphaLogin: jQuery('input[name=alphaLogin]').val()
+            },
+            beforeSend: function() {
+                buttonAction(button, 'loading');
+            },
+            complete: function() {
+                buttonAction(button, 'reset');
             },
             success: function (data) {
                 if (data.success) {

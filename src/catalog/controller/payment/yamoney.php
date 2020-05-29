@@ -66,10 +66,8 @@ class ControllerPaymentYaMoney extends Controller
             }
             $this->jsonError('Ошибка настройки модуля');
         }
-        if (!isset($_GET['paymentType'])) {
-            $this->jsonError('Не указан способ оплаты');
-        }
-        $paymentType = $_GET['paymentType'];
+
+        $paymentType = !empty($_GET['paymentType']) ? $_GET['paymentType'] : '';
 
         $successUrl = str_replace(
             array('&amp;'),
@@ -87,7 +85,11 @@ class ControllerPaymentYaMoney extends Controller
             exit();
         }
 
-        if (!$paymentMethod->getEPL()) {
+        if ($paymentMethod->getEPL()) {
+            if (!empty($paymentType) && $paymentType !== PaymentMethodType::INSTALLMENTS) {
+                $this->jsonError('Invalid payment method');
+            }
+        } else {
             if (empty($paymentType)) {
                 $this->jsonError('Не указан способ оплаты');
             } elseif (!$paymentMethod->isPaymentMethodEnabled($paymentType)) {
@@ -371,11 +373,12 @@ class ControllerPaymentYaMoney extends Controller
         if (isset($orderInfo['telephone'])) {
             $this->data['phone'] = $orderInfo['telephone'];
         }
-
+        if ($this->currency->has('RUB')) {
+            $this->data['sum'] = sprintf('%.2f', $this->currency->format($orderInfo['total'], 'RUB', '', false));
+        } else {
+            $this->data['sum'] = sprintf('%.2f', $this->getModel()->convertFromCbrf($orderInfo, 'RUB'));
+        }
         $this->data['cmsname']        = ($child) ? 'opencart-extracall' : 'opencart';
-        $this->data['sum']            = $this->currency->format(
-            $orderInfo['total'], $orderInfo['currency_code'], $orderInfo['currency_value'], false
-        );
         $this->data['button_confirm'] = $this->language->get('button_confirm');
         $this->data['order_id']       = $orderInfo['order_id'];
         $this->data['paymentMethod']  = $paymentMethod;

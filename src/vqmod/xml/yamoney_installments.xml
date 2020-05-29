@@ -53,7 +53,27 @@
             ]]></add>
         </operation>
     </file>
-
+    <!-- Проброс конфига в шаблон header -->
+    <file path="catalog/controller/common/header.php" error="skip">
+        <operation error="skip" info="Include config to header">
+            <search><![CDATA[$this->language->load('common/header');]]></search>
+            <add position="after"><![CDATA[
+                $this->data['config'] = $this->config;
+            ]]></add>
+        </operation>
+    </file>
+    <!-- Вставка скрипта кнопки "Заплатить по частям" -->
+    <file name="catalog/view/theme/*/template/common/header.tpl" error="skip">
+        <operation error="skip" info="Add Credit UI">
+            <search><![CDATA[</head>]]></search>
+            <add position="before"><![CDATA[
+                <?php if (!empty($config) && $config->get('ya_kassa_enable') && ($config->get('ya_kassa_add_installments_button') or $config->get('ya_kassa_add_installments_block'))): ?>
+                <script src="https://static.yandex.net/kassa/pay-in-parts/ui/v1/"></script>
+                <?php endif ?>
+            ]]></add>
+        </operation>
+    </file>
+    <!-- Получение данных для виджета "Заплатить по частям" -->
     <file name="catalog/controller/product/product.php" error="skip">
         <operation error="skip" info="Add Credit info flag">
             <search position="replace">
@@ -61,24 +81,13 @@
             <add><![CDATA[
                 $product_info = $this->model_catalog_product->getProduct($product_id);
                 $paymentOptions = (array)$this->config->get('ya_kassa_payment_options');
-                $enableCreditInEpl = $this->config->get('ya_kassa_payment_mode') === 'kassa' && $this->config->get('ya_kassa_add_installments_button');
-                $enableCreditInShopSide = $this->config->get('ya_kassa_payment_mode') === 'shop' && in_array('installments', $paymentOptions);
-                $showCreditInfo = $this->config->get('ya_kassa_enable') && ($enableCreditInEpl || $enableCreditInShopSide)
+                $showCreditInfo = $this->config->get('ya_kassa_enable')
                     && $this->config->get('ya_kassa_add_installments_block');
 
                 $this->data['yamoney_showCreditInfo'] = $showCreditInfo;
                 $this->data['yamoney_shop_id'] = $this->config->get('ya_kassa_shop_id');
                 $this->data['yamoney_credit_price'] = $this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax'));
                 $this->data['yamoney_language_code'] = $this->config->get('config_language');
-            ]]></add>
-        </operation>
-    </file>
-
-    <file name="catalog/view/theme/*/template/common/header.tpl" error="skip">
-        <operation error="skip" info="Add Credit UI">
-            <search position="before"><![CDATA[</head>]]></search>
-            <add><![CDATA[
-                <script src="https://static.yandex.net/kassa/pay-in-parts/ui/v1/"></script>
             ]]></add>
         </operation>
     </file>
