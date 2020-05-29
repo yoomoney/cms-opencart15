@@ -49,5 +49,5 @@ const YANDEX_MONEY_MIN_INSTALLMENTS_AMOUNT = 3000;
         </tbody>
     </table>
 <?php else: ?>
-    <input type="hidden" name="paymentType" value="">
+    <input type="hidden" name="paymentType" value="installments">
 <?php endif; ?>

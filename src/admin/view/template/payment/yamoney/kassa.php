@@ -56,7 +56,6 @@ use YandexCheckout\Model\PaymentMethodType;
             <div class="form-horizontal">
                 <div class="form-group">
                     <label class="col-sm-3 control-label"><?php echo $lang->get('kassa_payment_mode_label'); ?></label>
-                    <?php if (!$kassa->isTestMode()) : ?>
                     <div class="col-sm-9">
                         <label for="ya_kassa_payment_mode_kassa" class="control-label radio-inline">
                             <input type="radio" name="ya_kassa_payment_mode" id="ya_kassa_payment_mode_kassa"
@@ -89,9 +88,6 @@ use YandexCheckout\Model\PaymentMethodType;
                         </div>
                     </div>
                     <div class="col-sm-9 col-sm-offset-3">
-                    <?php else: ?>
-                    <div class="col-sm-9">
-                    <?php endif; ?>
                         <label for="ya_kassa_payment_mode_shop" class="radio-inline control-label">
                             <input type="radio" name="ya_kassa_payment_mode" id="ya_kassa_payment_mode_shop"
                                 class="cls_ya_paymode" value="shop"

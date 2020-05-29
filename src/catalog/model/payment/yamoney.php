@@ -191,7 +191,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.3.4',
+                        'module_version' => '1.3.5',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);
@@ -687,7 +687,7 @@ class ModelPaymentYaMoney extends Model
      * @param string $currency
      * @return string
      */
-    private function convertFromCbrf($order, $currency)
+    public function convertFromCbrf($order, $currency)
     {
         $config_currency = $this->config->get('config_currency');
 
