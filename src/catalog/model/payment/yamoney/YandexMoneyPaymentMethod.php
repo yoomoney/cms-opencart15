@@ -5,7 +5,7 @@ use YandexCheckout\Model\PaymentMethodType;
 class YandexMoneyPaymentMethod
 {
     /** @const string */
-    const MODULE_VERSION = '1.3.5';
+    const MODULE_VERSION = '1.4.0';
 
     /**
      * @const string
@@ -237,8 +237,6 @@ class YandexMoneyPaymentMethod
         return (int)$this->config->get('ya_kassa_hold_order_status');
     }
 
-
-
     /**
      * @return int
      */
@@ -258,5 +256,10 @@ class YandexMoneyPaymentMethod
         }
 
         return !in_array($paymentMethod, array('', PaymentMethodType::BANK_CARD));
+    }
+
+    public function getSortOrder()
+    {
+        return 0;
     }
 }

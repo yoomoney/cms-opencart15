@@ -73,4 +73,12 @@ class YandexMoneyPaymentBilling extends YandexMoneyPaymentMethod
             'ya_billing_id_zone',
         );
     }
+
+    /**
+     * @return int
+     */
+    public function getSortOrder()
+    {
+        return (int)$this->config->get('ya_billing_sort_order');
+    }
 }

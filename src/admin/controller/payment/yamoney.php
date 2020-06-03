@@ -24,7 +24,7 @@ class ControllerPaymentYaMoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '1.3.5';
+    private $moduleVersion = '1.4.0';
 
     /**
      * @var integer
@@ -670,6 +670,9 @@ class ControllerPaymentYaMoney extends Controller
                 if (isset($data[$param])) {
                     $settings[$param] = $data[$param];
                 }
+            }
+            if ($settings['ya_mode'] == $method->getMode()) {
+                $settings['yamoney_sort_order'] = $method->getSortOrder();
             }
         }
 

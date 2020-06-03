@@ -97,4 +97,12 @@ class YandexMoneyPaymentMoney extends YandexMoneyPaymentMethod
         }
         return $result;
     }
+
+    /**
+     * @return int
+     */
+    public function getSortOrder()
+    {
+        return (int)$this->config->get('ya_money_sort_order');
+    }
 }
