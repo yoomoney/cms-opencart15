@@ -59,14 +59,16 @@ class ModelPaymentYaMoney extends Model
                     $title = $this->language->get('text_title');
                 }
                 $sortKey = 'ya_sortOrder';
-            } else {
+            } elseif ($paymentMethod->isModeBilling()) {
                 $title   = 'Яндекс.Платежка (банковские карты, кошелек)';
                 $sortKey = 'ya_sortOrder';
+            } else {
+                $title   = 'Яндекс.Деньги (банковские карты, кошелек)';
             }
             $method_data = array(
                 'code'       => 'yamoney',
                 'title'      => $title,
-                'sort_order' => (int)$this->config->get($sortKey),
+                'sort_order' => $paymentMethod->getSortOrder(),
             );
         }
 
@@ -191,7 +193,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.3.5',
+                        'module_version' => '1.4.0',
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);

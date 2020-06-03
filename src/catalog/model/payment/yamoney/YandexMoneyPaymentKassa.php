@@ -502,4 +502,12 @@ class YandexMoneyPaymentKassa extends YandexMoneyPaymentMethod
     {
         return $this->currency_convert == 'on';
     }
+
+    /**
+     * @return int
+     */
+    public function getSortOrder()
+    {
+        return (int)$this->config->get('ya_kassa_sort_order');
+    }
 }

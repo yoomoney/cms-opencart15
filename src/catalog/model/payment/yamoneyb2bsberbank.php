@@ -22,7 +22,7 @@ class ModelPaymentYaMoneyB2bSberbank extends ModelPaymentYaMoney
             $method_data = array(
                 'code'       => 'yamoneyb2bsberbank',
                 'title'      => $this->language->get('yandex_money_b2b_sberbank'),
-                'sort_order' => (int)$this->config->get('ya_sortOrder'),
+                'sort_order' => (int)$this->config->get('yamoney_sort_order'),
             );
         }
 
