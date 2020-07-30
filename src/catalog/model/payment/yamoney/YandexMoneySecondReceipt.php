@@ -319,6 +319,6 @@ class YandexMoneySecondReceipt
             'payment_id' => $paymentId,
         ))->getItems();
 
-        return array_pop($receipts);
+        return array_shift($receipts);
     }
 }

@@ -118,13 +118,13 @@ $_['wallet_ordering_label']           = "Sorting order";
 $_['wallet_geo_zone_label']           = "Area of display";
 $_['wallet_all_zones']                = 'All areas';
 
-$_['tab_billing']                = 'Yandex.Billing';
+$_['tab_billing']                = 'Billing';
 $_['billing_header']             = '';
-$_['billing_enable']             = 'Activate payments via Yandex.Billing';
+$_['billing_enable']             = 'Activate payments via Billing';
 $_['billing_form_id']            = 'Form ID';
 $_['billing_purpose']            = 'Purpose of payment';
-$_['billing_purpose_desc']       = 'The purpose of payment is added to the payment order: specify whatever will help identify the order paid via Yandex.Billing';
-$_['billing_purpose_default']    = 'Order No. %order_id% Payment via Yandex.Billing';
+$_['billing_purpose_desc']       = 'The purpose of payment is added to the payment order: specify whatever will help identify the order paid via Billing';
+$_['billing_purpose_default']    = 'Order No. %order_id% Payment via Billing';
 $_['billing_status']             = 'Order status';
 $_['billing_status_desc']        = 'The status shouls indicate that the result of the payment is unknown: you can only find out if the customer paid or not by checking the notification sent to your email or by contacting your bank';
 $_['billing_feature_header']     = 'Additional settings for administrator';
