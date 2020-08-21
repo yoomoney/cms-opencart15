@@ -5,7 +5,7 @@ use YandexCheckout\Model\PaymentMethodType;
 class YandexMoneyPaymentMethod
 {
     /** @const string */
-    const MODULE_VERSION = '1.6.0';
+    const MODULE_VERSION = '1.7.0';
 
     /**
      * @const string
@@ -255,7 +255,16 @@ class YandexMoneyPaymentMethod
             return true;
         }
 
-        return !in_array($paymentMethod, array('', PaymentMethodType::BANK_CARD));
+        $paymentMethodsForHold = array(
+            '',
+            PaymentMethodType::BANK_CARD,
+            PaymentMethodType::YANDEX_MONEY,
+            PaymentMethodType::GOOGLE_PAY,
+            PaymentMethodType::APPLE_PAY,
+            self::CUSTOM_PAYMENT_METHOD_WIDGET,
+        );
+
+        return !in_array($paymentMethod, $paymentMethodsForHold);
     }
 
     public function getSortOrder()
