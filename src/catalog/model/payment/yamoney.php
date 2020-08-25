@@ -182,7 +182,6 @@ class ModelPaymentYaMoney extends Model
 
         try {
             $builder = CreatePaymentRequest::builder();
-//            $amount  = $this->currency->format($orderInfo['total'], 'RUB', '', false);
 
             $builder->setAmount($amount)
                     ->setCurrency($kassaCurrency)
@@ -193,7 +192,7 @@ class ModelPaymentYaMoney extends Model
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.7.0',
+                        'module_version' => YandexMoneyPaymentMethod::MODULE_VERSION,
                     ));
             if ($paymentMethod->getSendReceipt()) {
                 $this->setReceiptItems($builder, $orderInfo);

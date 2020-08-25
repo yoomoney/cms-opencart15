@@ -53,7 +53,7 @@ class ModelPaymentYaMoneyB2bSberbank extends ModelPaymentYaMoney
                     ->setMetadata(array(
                         'order_id'       => $orderInfo['order_id'],
                         'cms_name'       => 'ya_api_opencart',
-                        'module_version' => '1.0.14',
+                        'module_version' => YandexMoneyPaymentMethod::MODULE_VERSION,
                     ));
 
 
