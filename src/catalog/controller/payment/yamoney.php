@@ -272,9 +272,7 @@ class ControllerPaymentYaMoney extends Controller
         $this->getModel()->log('info',
             'Пришла нотификация для платежа '.$notification->getObject()->getId().' для заказа №'.$orderId);
 
-        $client = new Client();
-        $client->setAuth($paymentMethod->getShopId(), $paymentMethod->getPassword());
-        $client->setLogger($this->getModel());
+        $client = $this->getModel()->getClient($paymentMethod);
 
         try {
             $payment = $client->getPaymentInfo($notification->getObject()->getId());
