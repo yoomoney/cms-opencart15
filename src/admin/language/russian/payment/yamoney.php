@@ -17,7 +17,8 @@ $_['error_ya_kassa_shop_id']            = 'Укажите идентификат
 $_['error_ya_kassa_password']           = 'Укажите секретный ключ (shopPassword)';
 $_['error_invalid_shop_password']       = 'Секретный ключ указан в не верном формате';
 $_['error_invalid_shop_id_or_password'] = 'Проверьте shopId и Секретный ключ — где-то есть ошибка. А лучше скопируйте их прямо из <a href="https://kassa.yandex.ru/my" target="blank">личного кабинета Яндекс.Кассы</a>';
-//
+$_['error_install_widget']              = 'Чтобы покупатели могли заплатить вам через Apple Pay, <a href="https://kassa.yandex.ru/docs/merchant.ru.yandex.kassa">скачайте файл apple-developer-merchantid-domain-association</a> и добавьте его в папку ./well-known на вашем сайте. Если не знаете, как это сделать, обратитесь к администратору сайта или в поддержку хостинга. Не забудьте также подключить оплату через Apple Pay <a href="https://kassa.yandex.ru/my/payment-methods/settings#applePay">в личном кабинете Кассы</a>. <a href="https://kassa.yandex.ru/developers/payment-forms/widget#apple-pay-configuration">Почитать о подключении Apple Pay в документации Кассы</a>';
+
 $_['module_settings_header']                = "Настройки";
 $_['module_license']                        = "Работая с модулем, вы автоматически соглашаетесь с <a href='https://money.yandex.ru/doc.xml?id=527132' target='_blank'>условиями его использования</a>.";
 $_['module_version']                        = "Версия модуля ";
