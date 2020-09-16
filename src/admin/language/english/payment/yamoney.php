@@ -16,6 +16,7 @@ $_['error_ya_kassa_shop_id']            = 'Specify shopId';
 $_['error_ya_kassa_password']           = 'Specify secret key';
 $_['error_invalid_shop_password']       = 'Invalid format for the secret key';
 $_['error_invalid_shop_id_or_password'] = 'Such secret key does not exist. If you are sure you copied the key correctly, this means it does not work for some reason. Issue and activate the key again—under your Merchant Profile';
+$_['error_install_widget']              = 'Чтобы покупатели могли заплатить вам через Apple Pay, <a href="https://kassa.yandex.ru/docs/merchant.ru.yandex.kassa">скачайте файл apple-developer-merchantid-domain-association</a> и добавьте его в папку ./well-known на вашем сайте. Если не знаете, как это сделать, обратитесь к администратору сайта или в поддержку хостинга. Не забудьте также подключить оплату через Apple Pay <a href="https://kassa.yandex.ru/my/payment-methods/settings#applePay">в личном кабинете Кассы</a>. <a href="https://kassa.yandex.ru/developers/payment-forms/widget#apple-pay-configuration">Почитать о подключении Apple Pay в документации Кассы</a>';
 
 $_['module_settings_header']                = "Settings";
 $_['module_license']                        = "By using the module, you accept its <a href='https://money.yandex.ru/doc.xml?id=527132' target='_blank'>terms of use</a>.";

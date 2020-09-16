@@ -97,6 +97,7 @@ use YandexCheckout\Model\PaymentMethodType;
                     </div>
                     <div class="col-sm-9 col-sm-offset-3 selectPayOpt">
                         <p style="margin: 15px 0 0;"><?php echo $lang->get('kassa_payment_method_label'); ?></p>
+                        <div style="display:none" id="kassa-payment-method-warning" class="alert alert-warning"></div>
                         <?php foreach ($kassa->getPaymentMethods() as $val => $name) : ?>
                             <?php if ($kassa->isTestMode() && !in_array($val, array(PaymentMethodType::YANDEX_MONEY, PaymentMethodType::BANK_CARD))) continue; ?>
                             <div class="checkbox">
@@ -595,6 +596,26 @@ jQuery(document).ready(function() {
             $('.with-hold-only').slideUp();
         }
     }
+
+    jQuery('.selectPayOpt input').change(function () {
+        if (jQuery(this).val() !== 'widget') {
+            return;
+        } else if (!jQuery(this).prop('checked')) {
+            return;
+        }
+
+        jQuery.ajax({
+            url: "<?php echo htmlspecialchars_decode($install_widget_link); ?>",
+            dataType: "json",
+            method: "GET",
+            success: function (data) {
+                if (!data.ok) {
+                    jQuery('#kassa-payment-method-warning').html(data.error).show();
+                }
+            },
+        });
+    })
+
     $('#ya_kassa_enable_hold_mode').on('change', triggerEnableHold);
     triggerEnableHold();
 
