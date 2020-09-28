@@ -253,7 +253,7 @@ class YandexMoneySecondReceipt
         }
 
         if (isset($orderInfo['telephone']) && !empty($orderInfo['telephone'])) {
-            $customerData['phone'] = $orderInfo['telephone'];
+            $customerData['phone'] = preg_replace('/\D/', '', $orderInfo['telephone']);
         }
 
 
