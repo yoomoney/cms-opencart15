@@ -6,7 +6,7 @@ $_['heading_title'] = 'Yandex.Money 2.0';
 $_['text_yamoney'] = '<a onclick="window.open(\'https://money.yandex.ru\');"><img src="view/image/payment/yamoney.png" alt="Yandex.Money" title="Yandex.Money" /></a>';
 
 $_['text_success']     = 'Settings saved';
-$_['text_need_update'] = "Your module version is outdated. You can <a target='_blank' href='https://github.com/yandex-money/yandex-money-cms-opencart/releases'>download and install</a> a new one (%s)";
+$_['text_need_update'] = "Your module version is outdated. You can <a target='_blank' href='https://github.com/yoomoney/yandex-money-cms-v2-opencart15/releases'>download and install</a> a new one (%s)";
 
 $_['yandexmoney_license'] = '<p>By using this program in any way, you fully and unconditionally accept the terms of the license agreement as posted at <a href="https://money.yandex.ru/doc.xml?id=527132"> https://money.yandex.ru/doc.xml?id=527132 </a>(hereinafter referred to "license agreement"). If you do not accept any part of the terms of the license agreement, you are forbidden to use the program for any purpose.</p>';
 
