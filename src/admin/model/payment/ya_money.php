@@ -33,7 +33,7 @@ class ModelPaymentYaMoney extends Model
     private $backupDirectory = 'yamodule/backup';
     private $versionDirectory = 'yamodule/updates';
     private $downloadDirectory = 'yamodule';
-    private $repository = 'yandex-money/yandex-money-cms-v2-opencart15';
+    private $repository = 'yoomoney/yandex-money-cms-v2-opencart15';
 
     private $client;
 

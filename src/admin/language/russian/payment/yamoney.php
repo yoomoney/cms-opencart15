@@ -7,7 +7,7 @@ $_['text_yamoney'] = '<a onclick="window.open(\'https://money.yandex.ru\');"><im
 
 $_['text_success']     = 'Настройки модуля обновлены!';
 $_['kassa_all_zones']  = 'Все зоны';
-$_['text_need_update'] = "У вас неактуальная версия модуля. Вы можете <a target='_blank' href='https://github.com/yandex-money/yandex-money-cms-opencart/releases'>загрузить и установить</a> новую (%s)";
+$_['text_need_update'] = "У вас неактуальная версия модуля. Вы можете <a target='_blank' href='https://github.com/yoomoney/yandex-money-cms-v2-opencart15/releases'>загрузить и установить</a> новую (%s)";
 
 $_['yandexmoney_license'] = '<p>Любое использование Вами программы означает полное и безоговорочное принятие Вами условий лицензионного договора, размещенного по адресу <a href="https://money.yandex.ru/doc.xml?id=527132"> https://money.yandex.ru/doc.xml?id=527132 </a>(далее – «Лицензионный договор»). Если Вы не принимаете условия Лицензионного договора в полном объёме, Вы не имеете права использовать программу в каких-либо целях.</p>';
 

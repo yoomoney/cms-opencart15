@@ -11,13 +11,13 @@
 * [vQmod для Opencart](https://github.com/vqmod/vqmod/wiki/Installing-vQmod-on-OpenCart)
 
 ### Совместимость с CMS Opencart 2.1.x - 2.2.x
-Данный модуль совместим только с CMS Opencart версии 1.5.x. Для CMS Opencart 2.1.x - 2.2.x нами разработан универсальный модуль, который можно [загрузить здесь](https://github.com/yandex-money/yandex-money-ycms-v2-opencart).
+Данный модуль совместим только с CMS Opencart версии 1.5.x. Для CMS Opencart 2.1.x - 2.2.x нами разработан универсальный модуль, который можно [загрузить здесь](https://github.com/yoomoney/yandex-money-ycms-v2-opencart).
 
 ### Совместимость с CMS Opencart 2.3.x
-Для CMS Opencart 2.3.x нами разработан универсальный модуль, который можно [загрузить здесь](https://github.com/yandex-money/yandex-money-ycms-v2-opencart).
+Для CMS Opencart 2.3.x нами разработан универсальный модуль, который можно [загрузить здесь](https://github.com/yoomoney/yandex-money-ycms-v2-opencart).
 
 ### Совместимость с CMS Opencart 3.x
-Для CMS Opencart 3.x нами разработан универсальный модуль, который можно [загрузить здесь](https://github.com/yandex-money/yandex-money-ycms-opencart3).
+Для CMS Opencart 3.x нами разработан универсальный модуль, который можно [загрузить здесь](https://github.com/yoomoney/yandex-money-ycms-opencart3).
 
 ### О Кассе
 Сервис, который позволяет включить прием платежей на сайте.

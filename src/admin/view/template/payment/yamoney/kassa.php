@@ -427,7 +427,7 @@ use YandexCheckout\Model\PaymentMethodType;
                                         <?= $lang->get('kassa_second_receipt_enable_label'); ?>
                                     </td>
                                     <td style="border: none">
-                                        <select name="ya_kassa_second_receipt_status" class="form-control col-xl-4 col-md-4" data-toggle="tooltip" data-placement="left" title="">
+                                        <select id="ya_kassa_second_receipt_status" name="ya_kassa_second_receipt_status" class="form-control col-xl-4 col-md-4" data-toggle="tooltip" data-placement="left" title="">
                                             <?php foreach ($orderStatusList as $id => $status) : ?>
                                                     <option value="<?php echo $id; ?>"<?php echo ($id != $kassa->getSecondReceiptStatus() ?: ' selected="selected"'); ?>><?php echo htmlspecialchars($status); ?></option>
                                             <?php endforeach; ?>
