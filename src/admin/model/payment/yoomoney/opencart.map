@@ -1,0 +1,12 @@
+b:src
+f:admin/controller/payment/yoomoney.php
+f:{admin,catalog}/language/{english,russian}/payment/yoomoney.php
+d:{admin,catalog}/model/payment/yoomoney
+f:admin/model/payment/yoomoney.php
+f:admin/view/image/payment/{q,yoomoney}.png
+d:admin/view/template/payment/yoomoney
+f:admin/view/template/payment/yoomoney.tpl
+f:catalog/{controller,model}/payment/yoomoney.php
+f:catalog/view/theme/default/template/payment/yoomoney.tpl
+d:catalog/view/theme/default/template/payment/yoomoney
+d:image/yoomoney

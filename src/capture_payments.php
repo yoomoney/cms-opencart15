@@ -113,19 +113,19 @@ $registry->set('currency', new ConsoleCurrency($registry));
 
 echo ' ok' . PHP_EOL;
 
-echo 'Load yandex money model...';
-$loader->model('payment/yamoney');
+echo 'Load yoomoney model...';
+$loader->model('payment/yoomoney');
 $loader->model('checkout/order');
 
-/** @var ModelPaymentYaMoney $model */
-$model = $loader->model_payment_yamoney;
+/** @var ModelPaymentYoomoney $model */
+$model = $loader->model_payment_yoomoney;
 $model->getPaymentMethods();
 
 /** @var ModelCheckoutOrder $orderModel */
 $orderModel = $loader->model_checkout_order;
 
-/** @var YandexMoneyPaymentKassa $kassa */
-$kassa = $model->getPaymentMethod(YandexMoneyPaymentMethod::MODE_KASSA);
+/** @var YooMoneyPaymentKassa $kassa */
+$kassa = $model->getPaymentMethod(YooMoneyPaymentMethod::MODE_KASSA);
 echo ' ok' . PHP_EOL;
 
 echo 'Load pended payments...';
@@ -140,7 +140,7 @@ if (!empty($payments)) {
 
     echo 'Update payments statuses...' . PHP_EOL;
     $paymentObjects = $model->updatePaymentsStatuses($kassa, $payments);
-    echo ' ok, ' . count($paymentObjects) . ' payments exists in Yandex.Kassa' . PHP_EOL;
+    echo ' ok, ' . count($paymentObjects) . ' payments exists in YooKassa' . PHP_EOL;
 
     if (!empty($paymentObjects)) {
         echo 'Capturing...' . PHP_EOL;
@@ -148,7 +148,7 @@ if (!empty($payments)) {
         $total = 0;
         foreach ($paymentObjects as $payment) {
             echo '    Payment ' . $payment->getId();
-            if ($payment['status'] === \YandexCheckout\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
+            if ($payment['status'] === \YooKassa\Model\PaymentStatus::WAITING_FOR_CAPTURE) {
                 $total++;
                 echo ' capturing...';
                 if ($model->capturePayment($kassa, $payment, false)) {
@@ -163,7 +163,7 @@ if (!empty($payments)) {
                         echo 'failed to change status, order is empty!' . PHP_EOL;
                         continue;
                     } elseif ($orderInfo['order_status_id'] <= 0) {
-                        $link = $registry->get('url')->link('payment/yamoney/repay', 'order_id=' . $orderId, true);
+                        $link = $registry->get('url')->link('payment/yoomoney/repay', 'order_id=' . $orderId, true);
                         $anchor = '<a href="' . $link . '" class="button">Оплатить</a>';
                         $orderModel->confirm($orderId, 1, $anchor);
                     }

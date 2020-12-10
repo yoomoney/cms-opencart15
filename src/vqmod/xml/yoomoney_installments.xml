@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+    <id>yoomoney_installments</id>
+    <version>1.4.x and above</version>
+    <vqmver required="true">2.6.0</vqmver>
+    <author>YooMoney</author>
+
+
+    <file name="admin/controller/sale/order.php" error="skip">
+        <operation error="skip" info="Add Capture Link">
+            <search position="after"><![CDATA[$action = array();]]></search>
+            <add><![CDATA[
+            $yoomoney_kassa_hold_order_status = $this->config->get('yoomoney_kassa_hold_order_status');
+            $this->load->model('localisation/order_status');
+            $this->language->load('payment/yoomoney');
+            foreach($this->model_localisation_order_status->getOrderStatuses() as $order_status) {
+                if ($order_status['name'] !== $result['status']) {
+                    continue;
+                }
+                if ($order_status['order_status_id'] !== $yoomoney_kassa_hold_order_status) {
+                    continue;
+                }
+                $order = $this->model_sale_order->getOrder($result['order_id']);
+                if(!empty($order['payment_code']) && $order['payment_code'] == 'yoomoney') {
+                    $action[] = array(
+                        'text' => $this->language->get('kassa_hold_capture_form_link'),
+                        'href' => $this->url->link('payment/yoomoney/captureForm', 'token=' . $this->session->data['token'] . '&order_id=' . $result['order_id'] . $url, 'SSL')
+                    );
+                }
+            }
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/model/sale/order.php" error="skip">
+        <operation error="skip" info="Add Capture Link">
+            <search position="after"><![CDATA[public function editOrder($order_id, $data) {]]></search>
+            <add><![CDATA[
+            $this->load->model('payment/yoomoney');
+            $this->model_payment_yoomoney->init($this->config);
+            $this->model_payment_yoomoney->hookOrderStatusChange($order_id, $data['order_status_id']);
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/model/sale/order.php" error="skip">
+        <operation error="skip" info="Add Capture Link">
+            <search position="after"><![CDATA[public function addOrderHistory($order_id, $data) {]]></search>
+            <add><![CDATA[
+            $this->load->model('payment/yoomoney');
+            $this->model_payment_yoomoney->init($this->config);
+            $this->model_payment_yoomoney->hookOrderStatusChange($order_id, $data['order_status_id']);
+            ]]></add>
+        </operation>
+    </file>
+    <!-- Проброс конфига в шаблон header -->
+    <file path="catalog/controller/common/header.php" error="skip">
+        <operation error="skip" info="Include config to header">
+            <search><![CDATA[$this->language->load('common/header');]]></search>
+            <add position="after"><![CDATA[
+                $this->data['config'] = $this->config;
+            ]]></add>
+        </operation>
+    </file>
+    <!-- Вставка скрипта кнопки "Заплатить по частям" -->
+    <file name="catalog/view/theme/*/template/common/header.tpl" error="skip">
+        <operation error="skip" info="Add Credit UI">
+            <search><![CDATA[</head>]]></search>
+            <add position="before"><![CDATA[
+                <?php if (!empty($config) && $config->get('yoomoney_kassa_enable') && ($config->get('yoomoney_kassa_add_installments_button') or $config->get('yoomoney_kassa_add_installments_block'))): ?>
+                <script src="https://static.yandex.net/kassa/pay-in-parts/ui/v1/"></script>
+                <?php endif ?>
+            ]]></add>
+        </operation>
+    </file>
+    <!-- Получение данных для виджета "Заплатить по частям" -->
+    <file name="catalog/controller/product/product.php" error="skip">
+        <operation error="skip" info="Add Credit info flag">
+            <search position="replace">
+                <![CDATA[$product_info = $this->model_catalog_product->getProduct($product_id);]]></search>
+            <add><![CDATA[
+                $product_info = $this->model_catalog_product->getProduct($product_id);
+                $paymentOptions = (array)$this->config->get('yoomoney_kassa_payment_options');
+                $showCreditInfo = $this->config->get('yoomoney_kassa_enable')
+                    && $this->config->get('yoomoney_kassa_add_installments_block');
+
+                $this->data['yoomoney_showCreditInfo'] = $showCreditInfo;
+                $this->data['yoomoney_shop_id'] = $this->config->get('yoomoney_kassa_shop_id');
+                $this->data['yoomoney_credit_price'] = $this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax'));
+                $this->data['yoomoney_language_code'] = $this->config->get('config_language');
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="catalog/view/theme/*/template/product/product.tpl" error="skip">
+        <operation error="skip" info="Add Credit info template">
+            <search position="before"><![CDATA[<div class="cart">]]></search>
+            <add><![CDATA[
+                <?php if($yoomoney_showCreditInfo):?>
+                    <div>
+                        <div class="installments-info"></div>
+                    </div>
+                    <br>
+                <?php endif;?>
+            ]]></add>
+        </operation>
+        <operation error="skip" info="Add Credit UI">
+            <search position="before"><![CDATA[<?php echo $footer; ?>]]></search>
+            <add><![CDATA[
+                <script>
+                    if (typeof YandexCheckoutCreditUI !== "undefined") {
+                        const $yoomoneyCheckoutCreditUI = YandexCheckoutCreditUI({
+                            shopId: '<?php echo $yoomoney_shop_id;?>',
+                            sum: '<?php echo round($yoomoney_credit_price, 2);?>',
+                            language: '<?php echo $yoomoney_language_code;?>'
+                        });
+
+                        const yoomoneyCheckoutCreditButton = $yoomoneyCheckoutCreditUI({
+                            type: 'info',
+                            domSelector: '.installments-info'
+                        });
+                    }
+                </script>
+            ]]></add>
+        </operation>
+    </file>
+
+</modification>
