@@ -117,13 +117,13 @@ jQuery(document).ready(function () {
     const yoomoney_installments_total_amount = <?=$sum;?>;
     <?php if ($paymentMethod->getEPL()) : ?>
         <?php if ($paymentMethod->isAddInstallmentsButton()) { ?>
-        if  (typeof YandexCheckoutCreditUI !== "undefined") {
-            const checkoutCreditUI = YandexCheckoutCreditUI({
+        if  (typeof CheckoutCreditUI !== "undefined") {
+            const yoomoneyCheckoutCreditUI = CheckoutCreditUI({
                 shopId: yoomoney_installments_shop_id,
                 sum: yoomoney_installments_total_amount,
                 language: "<?=$paymentMethod->i18n('language_code');?>"
             });
-            const checkoutCreditButton = checkoutCreditUI({type: 'button', domSelector: '.yoomoney_kassa_installments_button_container'});
+            const checkoutCreditButton = yoomoneyCheckoutCreditUI({type: 'button', domSelector: '.yoomoney_kassa_installments_button_container'});
             checkoutCreditButton.on('click', function () {
                 jQuery.ajax({
                     url: "<?php echo $validate_url; ?>",
