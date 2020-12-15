@@ -68,7 +68,7 @@
             <search><![CDATA[</head>]]></search>
             <add position="before"><![CDATA[
                 <?php if (!empty($config) && $config->get('yoomoney_kassa_enable') && ($config->get('yoomoney_kassa_add_installments_button') or $config->get('yoomoney_kassa_add_installments_block'))): ?>
-                <script src="https://static.yandex.net/kassa/pay-in-parts/ui/v1/"></script>
+                <script src="https://static.yoomoney.ru/checkout-credit-ui/v1/index.js"></script>
                 <?php endif ?>
             ]]></add>
         </operation>
@@ -108,8 +108,8 @@
             <search position="before"><![CDATA[<?php echo $footer; ?>]]></search>
             <add><![CDATA[
                 <script>
-                    if (typeof YandexCheckoutCreditUI !== "undefined") {
-                        const $yoomoneyCheckoutCreditUI = YandexCheckoutCreditUI({
+                    if (typeof CheckoutCreditUI !== "undefined") {
+                        const $yoomoneyCheckoutCreditUI = CheckoutCreditUI({
                             shopId: '<?php echo $yoomoney_shop_id;?>',
                             sum: '<?php echo round($yoomoney_credit_price, 2);?>',
                             language: '<?php echo $yoomoney_language_code;?>'
