@@ -26,7 +26,7 @@ class ControllerPaymentYoomoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '2.0.1';
+    private $moduleVersion = '2.0.2';
 
     /**
      * @var integer
@@ -724,7 +724,7 @@ class ControllerPaymentYoomoney extends Controller
         $settings['yoomoney_kassa_b2b_tax_rates']                = isset($data['yoomoney_kassa_b2b_tax_rates']) ? $data['yoomoney_kassa_b2b_tax_rates'] : "";
         $settings['yoomoney_kassa_default_payment_mode']         = isset($data['yoomoney_kassa_default_payment_mode']) ? $data['yoomoney_kassa_default_payment_mode'] : "";
         $settings['yoomoney_kassa_default_payment_subject']      = isset($data['yoomoney_kassa_default_payment_subject']) ? $data['yoomoney_kassa_default_payment_subject'] : "";
-        $settings['yoomoneyb2bsberbank_status']             = $settings['yoomoney_status'];
+        $settings['yoomoneyb2bsberbank_status']                  = $settings['yoomoney_status'];
 
         $this->model_setting_setting->editSetting('yoomoney', $settings);
 
