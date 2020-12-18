@@ -113,7 +113,7 @@
                     </div>
                 </div>
                 <div class="form-group" id="yoomoney-new-status">
-                    <label class="control-label col-sm-3" for="yoomoney_sort_order"><?php echo $lang->get('wallet_order_status_label'); ?></label>
+                    <label class="control-label col-sm-3" for="yoomoney_new_order_status"><?php echo $lang->get('wallet_order_status_label'); ?></label>
                     <div class="col-sm-8">
                         <select name="yoomoney_new_order_status" id="yoomoney_new_order_status" class="form-control" data-toggle="tooltip" data-placement="left" title="">
                             <?php foreach ($orderStatusList as $id => $status) : ?>
@@ -123,10 +123,10 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="control-label col-sm-3" for="yoomoney_id_zone"><?php echo $lang->get('wallet_ordering_label'); ?></label>
+                    <label class="control-label col-sm-3" for="yoomoney_wallet_sort_order"><?php echo $lang->get('wallet_ordering_label'); ?></label>
                     <div class="col-sm-8">
-                        <input name="yoomoney_sort_order" id="yoomoney_sort_order" type="text" class="form-control"
-                               value="<?php echo (int) $yoomoney_sort_order; ?>" />
+                        <input name="yoomoney_wallet_sort_order" id="yoomoney_wallet_sort_order" type="text" class="form-control"
+                               value="<?php echo (int) $yoomoney_wallet_sort_order; ?>" />
                         <p class="help-block"></p>
                     </div>
                 </div>

@@ -602,7 +602,7 @@ class ModelPaymentYoomoney extends Model
      */
     public function hookOrderStatusChange($orderId, $status)
     {
-        require_once YOOMONEY_MODULE_PATH . '/YooKassaSecondReceipt.php';
+        require_once YOOMONEY_MODULE_PATH . '/YooMoneySecondReceipt.php';
 
         $this->load->model('account/order');
         $orderInfo = $this->model_account_order->getOrder($orderId);

@@ -69,7 +69,7 @@ class YooMoneyPaymentMoney extends YooMoneyPaymentMethod
             'yoomoney_payment_options',
             'yoomoney_new_order_status',
             'yoomoney_debug_mode',
-            'yoomoney_sort_order',
+            'yoomoney_wallet_sort_order',
             'yoomoney_id_zone',
             'yoomoney_create_order_before_redirect',
             'yoomoney_clear_cart_before_redirect',
@@ -103,6 +103,6 @@ class YooMoneyPaymentMoney extends YooMoneyPaymentMethod
      */
     public function getSortOrder()
     {
-        return (int)$this->config->get('yoomoney_sort_order');
+        return (int)$this->config->get('yoomoney_wallet_sort_order');
     }
 }
