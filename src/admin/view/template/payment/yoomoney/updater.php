@@ -1,4 +1,4 @@
-<div role="tabpanel" class="tab-pane" id="updater">
+<div role="tabpanel" class="tab-pane<?php echo ($lastActiveTab == 'tab-updater' ? ' active' : ''); ?>" id="updater">
     <div class="row">
         <div class="col-md-12">
             <p>

@@ -55,10 +55,11 @@
         <!-- Навигация -->
         <form action="<?php echo $action; ?>" method="post" id="form">
             <input type="hidden" name="yoomoney_nps_prev_vote_time" value="<?php echo $yoomoney_nps_prev_vote_time; ?>">
+            <input type="hidden" name="last_active_tab" id="last-active-tab" value="<?php echo $lastActiveTab; ?>" />
             <ul class="nav nav-tabs" role="tablist">
-                <li id="tabKassa" class="active"><a href="#kassa" class="my-tabs" aria-controls="kassa" role="tab" data-toggle="tab"><?php echo $lang->get('kassa_tab_label'); ?></a></li>
-                <li id="tabMoney"><a href="#money" class="my-tabs" aria-controls="kassa" role="tab" data-toggle="tab"><?php echo $lang->get('wallet_tab_label'); ?></a></li>
-                <li id="tabUpdater"><a href="#updater" class="my-tabs" aria-controls="kassa" role="tab" data-toggle="tab"><?php echo $lang->get('tab_updater'); ?></a></li>
+                <li id="tabKassa"<?php echo ($lastActiveTab == 'tab-kassa' ? ' class="active"' : ''); ?>><a href="#kassa" class="my-tabs" aria-controls="kassa" role="tab" data-toggle="tab"><?php echo $lang->get('kassa_tab_label'); ?></a></li>
+                <li id="tabMoney"<?php echo ($lastActiveTab == 'tab-money' ? ' class="active"' : ''); ?>><a href="#money" class="my-tabs" aria-controls="kassa" role="tab" data-toggle="tab"><?php echo $lang->get('wallet_tab_label'); ?></a></li>
+                <li id="tabUpdater"<?php echo ($lastActiveTab == 'tab-updater' ? ' class="active"' : ''); ?>><a href="#updater" class="my-tabs" aria-controls="kassa" role="tab" data-toggle="tab"><?php echo $lang->get('tab_updater'); ?></a></li>
                 <div class="buttons text-right">
                     <a onclick="$('#form').submit();" class="button"><?php echo $lang->get('button_save'); ?></a>
                     <a href="<?php echo $cancel; ?>" class="button"><?php echo $lang->get('button_cancel'); ?></a>
@@ -119,6 +120,7 @@
             };
 
             var active = $(this).attr("href");
+            $('#last-active-tab').val('tab-' + active.substr(1));
             for (var type in panelOptions) {
                 var id = "#" + type;
                 if (id == active) {
