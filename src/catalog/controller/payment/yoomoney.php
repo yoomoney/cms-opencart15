@@ -346,7 +346,7 @@ class ControllerPaymentYoomoney extends Controller
                 ) {
                     $this->getModel()->log('info', 'Order status changed');
                     $sender                       = ($callbackParams['sender'] != '') ? "Номер кошелька ЮMoney: ".$callbackParams['sender']."." : '';
-                    $this->model_checkout_order->update($orderId, $this->config->get('yoomoney_new_order_status'),$sender." Сумма: ".$callbackParams['withdraw_amount']);
+                    $this->model_checkout_order->update($orderId, $this->config->get('yoomoney_wallet_new_order_status'),$sender." Сумма: ".$callbackParams['withdraw_amount']);
                 }
             }
         } else {
@@ -452,7 +452,7 @@ class ControllerPaymentYoomoney extends Controller
     {
         $this->data['tpl'] = 'wallet';
 
-        $this->data['account'] = $this->config->get('yoomoney_wallet');
+        $this->data['account'] = $this->config->get('yoomoney_wallet_account_id');
 
         $this->data['shop_id'] = $paymentMethod->getShopId();
         $this->data['scid']    = $paymentMethod->getScId();

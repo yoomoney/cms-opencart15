@@ -26,7 +26,7 @@ class ControllerPaymentYoomoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '2.0.2';
+    private $moduleVersion = '2.0.3';
 
     /**
      * @var integer
@@ -134,6 +134,22 @@ class ControllerPaymentYoomoney extends Controller
                 $this->data['wallet_name_methods'] = $method->getPaymentMethods();
             }
         }
+
+        if ($this->data['yoomoney_kassa_enable']) {
+            $tab = 'tab-kassa';
+        } elseif ($this->data['yoomoney_wallet_enable']) {
+            $tab = 'tab-money';
+        } else {
+            $tab = 'tab-kassa';
+        }
+
+        if (!empty($post['last_active_tab'])) {
+            $this->session->data['last-active-tab'] = $post['last_active_tab'];
+        } else {
+            $this->session->data['last-active-tab'] = $tab;
+        }
+
+        $this->data['lastActiveTab'] = $this->session->data['last-active-tab'];
 
         $this->data['lang']    = $this->language;
         $this->data['kassa']   = $this->getModel()->getPaymentMethod(YooMoneyPaymentMethod::MODE_KASSA);
@@ -644,7 +660,7 @@ class ControllerPaymentYoomoney extends Controller
 
         if (isset($data['yoomoney_kassa_enable']) && $data['yoomoney_kassa_enable'] == '1') {
             $mode = YooMoneyPaymentMethod::MODE_KASSA;
-        } elseif (isset($data['yoomoney_on']) && $data['yoomoney_on'] == '1') {
+        } elseif (isset($data['yoomoney_wallet_enable']) && $data['yoomoney_wallet_enable'] == '1') {
             $mode = YooMoneyPaymentMethod::MODE_MONEY;
         } else {
             $mode = YooMoneyPaymentMethod::MODE_NONE;
@@ -673,7 +689,7 @@ class ControllerPaymentYoomoney extends Controller
                 }
             }
         } elseif ($method->isModeMoney()) {
-            if (count($data['yoomoney_payment_options']) == 0) {
+            if (count($data['yoomoney_wallet_payment_options']) == 0) {
                 $this->error[] = $this->language->get('error_empty_payment');
             }
         }
@@ -691,15 +707,15 @@ class ControllerPaymentYoomoney extends Controller
 
         if (isset($data['yoomoney_kassa_enable']) && $data['yoomoney_kassa_enable'] == '1') {
             $settings['yoomoney_mode']           = YooMoneyPaymentMethod::MODE_KASSA;
-            $settings['yoomoney_on']       = '0';
-        } elseif (isset($data['yoomoney_on']) && $data['yoomoney_on'] == '1') {
+            $settings['yoomoney_wallet_enable']       = '0';
+        } elseif (isset($data['yoomoney_wallet_enable']) && $data['yoomoney_wallet_enable'] == '1') {
             $settings['yoomoney_mode']           = YooMoneyPaymentMethod::MODE_MONEY;
             $settings['yoomoney_kassa_enable']   = '0';
         } else {
             $settings['yoomoney_mode']           = YooMoneyPaymentMethod::MODE_NONE;
             $settings['yoomoney_status']    = '0';
             $settings['yoomoney_kassa_enable']   = '0';
-            $settings['yoomoney_on']       = '0';
+            $settings['yoomoney_wallet_enable']       = '0';
         }
         $settings['yoomoney_nps_prev_vote_time'] = $data['yoomoney_nps_prev_vote_time'];
 

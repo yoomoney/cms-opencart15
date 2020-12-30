@@ -8,10 +8,14 @@
 use YooKassa\Model\PaymentMethodType;
 
 ?>
-<div role="tabpanel" class="tab-pane active" id="kassa">
+<div role="tabpanel" class="tab-pane<?php echo ($lastActiveTab == 'tab-kassa' ? ' active' : ''); ?>" id="kassa">
     <div class="row">
         <div class="col-md-12">
-            <p><?php echo $lang->get('kassa_header_description'); ?></p>
+            <div class="form-group row">
+                <div class="col-sm-9 col-sm-offset-3" style="padding-top: 15px;">
+                    <p><?php echo $lang->get('kassa_header_description'); ?></p>
+                </div>
+            </div>
             <div class="form-group row">
                 <div class="col-sm-9 col-sm-offset-3" style="padding-left: 35px;">
                     <label class="checkbox control-label" for="yoomoney_kassa_enable">
