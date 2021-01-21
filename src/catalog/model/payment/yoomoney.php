@@ -364,6 +364,30 @@ class ModelPaymentYoomoney extends Model
         return $payment;
     }
 
+
+    /**
+     * @param $order_id
+     * @param $order_info
+     *
+     * @return bool
+     */
+    public function updateOrderStatus($order_id, $order_info)
+    {
+        if ($order_info && !empty($order_info['order_status_id'])) {
+            $sql = "UPDATE `".DB_PREFIX."order` SET order_status_id = '".(int)$order_info['order_status_id']
+                ."', date_modified = NOW() WHERE order_id = '".(int)$order_id."'";
+
+            try {
+                $data = $this->db->query($sql);
+                return !empty($data);
+            } catch (Exception $e) {
+                $this->log('error', $e->getMessage());
+            }
+
+            return false;
+        }
+    }
+
     /**
      * @param $orderId
      * @param $status
@@ -378,7 +402,8 @@ class ModelPaymentYoomoney extends Model
             .$this->db->escape($comment)."', date_added = NOW()";
 
         try {
-            return $this->db->query($sql);
+            $data = $this->db->query($sql);
+            return !empty($data);
         } catch (Exception $e) {
             $this->log('error', $e->getMessage());
         }

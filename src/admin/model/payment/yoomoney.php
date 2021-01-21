@@ -85,7 +85,7 @@ class ModelPaymentYoomoney extends Model
 
     public function log($level, $message, $context = null)
     {
-        if ($this->config === null || $this->config->get('yoomoney_kassa_debug_mode')) {
+        if ($this->config === null || $this->config->get('yoomoney_kassa_debug_mode') || $this->config->get('yoomoney_wallet_debug_mode')) {
             $log     = new Log('yoomoney.log');
             $search  = array();
             $replace = array();
@@ -555,12 +555,13 @@ class ModelPaymentYoomoney extends Model
      */
     public function updateOrderStatus($order_id, $order_info)
     {
-        if ($order_info && $order_info['order_status_id']) {
+        if ($order_info && !empty($order_info['order_status_id'])) {
             $sql = "UPDATE `".DB_PREFIX."order` SET order_status_id = '".(int)$order_info['order_status_id']
                    ."', date_modified = NOW() WHERE order_id = '".(int)$order_id."'";
 
             try {
-                return $this->db->query($sql);
+                $data = $this->db->query($sql);
+                return !empty($data);
             } catch (Exception $e) {
                 $this->log('error', $e->getMessage());
             }
@@ -583,7 +584,8 @@ class ModelPaymentYoomoney extends Model
             .$this->db->escape($comment)."', date_added = NOW()";
 
         try {
-            return $this->db->query($sql);
+            $data = $this->db->query($sql);
+            return !empty($data);
         } catch (Exception $e) {
             $this->log('error', $e->getMessage());
         }
