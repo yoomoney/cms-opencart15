@@ -135,7 +135,7 @@ class ControllerPaymentYoomoney extends Controller
     /**
      * Экшен подтверждения платежа, вызывается при возврате пользователя из кассы
      *
-     * Очищает корзину, устанавливает ножный статус заказа, если нужно, осуществляет подтверждение платежа на стороне
+     * Очищает корзину, устанавливает нужный статус заказа, если нужно, осуществляет подтверждение платежа на стороне
      * кассы. Если платёж в статусе кансэллед, то редиректит на страницу ошибки.
      */
     public function confirm()
@@ -183,11 +183,24 @@ class ControllerPaymentYoomoney extends Controller
 
         } elseif ($paymentMethod instanceof YooMoneyPaymentMoney) {
             $this->getModel()->log('info', 'Wallet payment');
+
+            $type = $_POST['paymentType'];
+            $this->getModel()->log('info', 'type: ' . $type);
+
+            if ($type !== 'AC' && $type !== 'PC') {
+                $this->jsonError('Invalid payment type');
+            }
+
             if (isset($this->session->data['order_id'])) {
+                $this->load->model('checkout/order');
+                $orderId = $this->session->data['order_id'];
+                $orderInfo = $this->model_checkout_order->getOrder($orderId);
+                $this->getModel()->log('info', 'post: ' . print_r(array($orderInfo, $_POST), true));
+                if ((float)$_POST['sum'] != (float)$orderInfo['total']) {
+                    $this->jsonError('Invalid total amount');
+                }
+
                 if ($paymentMethod->getCreateOrderBeforeRedirect()) {
-                    $orderId = $this->session->data['order_id'];
-                    $this->load->model('checkout/order');
-                    $orderInfo = $this->model_checkout_order->getOrder($orderId);
                     if ($orderInfo['order_status_id'] <= 0) {
                         $this->getModel()->log('info', 'Wallet create payment');
                         $this->getModel()->confirmOrder($paymentMethod, $orderId);
@@ -197,7 +210,12 @@ class ControllerPaymentYoomoney extends Controller
                     $this->getModel()->log('info', 'Wallet clear cart');
                     $this->cart->clear();
                 }
+
+                echo json_encode(array('success' => true));
+            } else {
+                $this->jsonError('Invalid order ID');
             }
+            exit();
         }
     }
 
@@ -314,43 +332,54 @@ class ControllerPaymentYoomoney extends Controller
      */
     public function callback()
     {
-        if ($_SERVER['REQUEST_METHOD'] == "GET") {
-            echo "You aren't YooMoney. We use module for Opencart 1.5.x";
-
-            return;
+        if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+            exit("You aren't YooMoney. We use module for Opencart 1.5.x");
         }
         $callbackParams = $_POST;
-        if (isset($callbackParams["label"])) {
-            $orderId = $callbackParams["label"];
-        } else {
-            $this->errorRedirect('Invalid callback parameters, label not specified');
-        }
+        $this->getModel()->log('info', "callback: request \n" . print_r($_REQUEST, true));
+        $orderId = !empty($callbackParams['label']) ? (int)$callbackParams['label'] : 0;
+
         /** @var YooMoneyPaymentMoney $paymentMethod */
         $paymentMethod = $this->getModel()->getPaymentMethod($this->config->get('yoomoney_mode'));
         if (!$paymentMethod->isModeMoney()) {
-            $this->errorRedirect('Invalid payment mode in callback');
+            $this->getModel()->log('error', 'callback: Invalid payment mode in callback');
+            exit();
         }
         if ($paymentMethod->checkSign($callbackParams)) {
             $this->load->model('checkout/order');
             $orderInfo = $this->model_checkout_order->getOrder($orderId);
-            $this->getModel()->log('info', 'Check signature success');
+            $this->getModel()->log('info', 'callback: Check signature success');
 
             if (empty($orderInfo)) {
-                $this->errorRedirect('Order#'.$orderId.' not exists in database (callback)');
+                $this->getModel()->log('error', 'callback: Order#'.$orderId.' not exists in database');
+                exit();
             } else {
-                $this->getModel()->log('info', 'Prepare change order status');
-
-                $amount = number_format($callbackParams['withdraw_amount'], 2, '.', '');
-                if ($callbackParams['paymentType'] == "MP" || $amount == number_format($orderInfo['total'], 2, '.',
-                        '')
-                ) {
-                    $this->getModel()->log('info', 'Order status changed');
-                    $sender                       = ($callbackParams['sender'] != '') ? "Номер кошелька ЮMoney: ".$callbackParams['sender']."." : '';
-                    $this->model_checkout_order->update($orderId, $this->config->get('yoomoney_wallet_new_order_status'),$sender." Сумма: ".$callbackParams['withdraw_amount']);
+                $this->getModel()->log('info', 'callback: Prepare change order status');
+                $orderAmount = sprintf('%.2f', $this->currency->format($orderInfo['total'], 'RUB', '', false));
+                $this->getModel()->log('info', 'callback: Total order = ' . $orderAmount . ',  Total paid = ' . $callbackParams['amount'] . ';'.print_r($callbackParams, true));
+                if ($callbackParams['amount'] == $orderAmount) {
+                    $this->getModel()->log('info', 'callback: Payment amount is valid.');
+                    $sender = ($callbackParams['sender'] != '') ? "Номер кошелька ЮMoney: ".$callbackParams['sender']."." : '';
+                    $orderInfo['order_status_id'] = $this->config->get('yoomoney_wallet_new_order_status');
+                    $this->getModel()->updateOrderStatus($orderId, $orderInfo);
+                    $this->getModel()->updateOrderHistory(
+                        $orderId,
+                        $orderInfo['order_status_id'],
+                        $sender . 'Платёж номер "' . $callbackParams['operation_id'] . '" подтверждён'
+                    );
+                    $this->getModel()->log('info', 'callback: Order status changed');
+                } else {
+                    $message = 'Получен платёж номер "' . $callbackParams['operation_id'] . '" на сумму ' . $callbackParams['amount'] . ' RUB';
+                    $this->getModel()->updateOrderHistory(
+                        $orderId,
+                        $orderInfo['order_status_id'] ?: 1,
+                        $message
+                    );
+                    $this->getModel()->log('error', 'callback: Payment amount is not valid.');
                 }
             }
         } else {
-            $this->getModel()->log('error', 'Check signature failed callback params'.$callbackParams);
+            $this->getModel()->log('error', 'callback: Check signature failed callback params'.$callbackParams);
         }
     }
 

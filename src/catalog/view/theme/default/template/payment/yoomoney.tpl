@@ -94,11 +94,26 @@ jQuery(document).ready(function () {
 
     jQuery('#button-confirm').off('click').on('click', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         jQuery.ajax({
-            type: 'get',
-            url: 'index.php?route=payment/yoomoney/confirm'
+            type: 'POST',
+            url: 'index.php?route=payment/yoomoney/confirm',
+            cache: false,
+            dataType: 'json',
+            data: form.serialize(),
+            success: function (data) {
+                if (data.success) {
+                    form.submit();
+                } else {
+                    console.error('YooMoney error: ' + data.error);
+                    return false;
+                }
+            },
+            failure: function () {
+                onValidateError("Failed to create payment");
+                return false;
+            }
         });
-        form.submit();
     });
 
     jQuery('input[name=paymentType]').off('click').on('click', function(e) {
