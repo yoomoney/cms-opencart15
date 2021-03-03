@@ -84,9 +84,16 @@
                 $showCreditInfo = $this->config->get('yoomoney_kassa_enable')
                     && $this->config->get('yoomoney_kassa_add_installments_block');
 
-                $this->data['yoomoney_showCreditInfo'] = $showCreditInfo;
+                $product_price = $this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax'));
+                if ($this->currency->has('RUB')) {
+                    $yoomoney_credit_price = sprintf('%.2f', $this->currency->format($product_price, 'RUB', '', false));
+                } else {
+                    $yoomoney_credit_price = sprintf('%.2f', $this->getModel()->convertFromCbrf(array('total' => $product_price), 'RUB'));
+                }
+
+                $this->data['yoomoney_showCreditInfo'] = $showCreditInfo && ($yoomoney_credit_price >= 3000);
                 $this->data['yoomoney_shop_id'] = $this->config->get('yoomoney_kassa_shop_id');
-                $this->data['yoomoney_credit_price'] = $this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax'));
+                $this->data['yoomoney_credit_price'] = $yoomoney_credit_price;
                 $this->data['yoomoney_language_code'] = $this->config->get('config_language');
             ]]></add>
         </operation>

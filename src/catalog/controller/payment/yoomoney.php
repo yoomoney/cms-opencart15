@@ -196,7 +196,12 @@ class ControllerPaymentYoomoney extends Controller
                 $orderId = $this->session->data['order_id'];
                 $orderInfo = $this->model_checkout_order->getOrder($orderId);
                 $this->getModel()->log('info', 'post: ' . print_r(array($orderInfo, $_POST), true));
-                if ((float)$_POST['sum'] != (float)$orderInfo['total']) {
+                if ($this->currency->has('RUB')) {
+                    $orderAmount = sprintf('%.2f', $this->currency->format($orderInfo['total'], 'RUB', '', false));
+                } else {
+                    $orderAmount = sprintf('%.2f', $this->getModel()->convertFromCbrf($orderInfo, 'RUB'));
+                }
+                if ((float)$_POST['sum'] != (float)$orderAmount) {
                     $this->jsonError('Invalid total amount');
                 }
 
