@@ -117,7 +117,6 @@ jQuery(document).ready(function () {
     });
 
     jQuery('input[name=paymentType]').off('click').on('click', function(e) {
-        e.preventDefault();
         if (jQuery('input[name=paymentType]:checked').val()=='MP'){
             var textMpos='<?php echo $mpos_page_url; ?>';
             form.attr('action', textMpos.replace(/&amp;/g, '&'));
@@ -236,7 +235,7 @@ jQuery(document).ready(function () {
             confirmation_token: data.token,
             return_url: data.redirect,
             embedded_3ds: true,
-            error_callback(error) {
+            error_callback: function(error) {
                 if (error.error === 'token_expired') {
                     resetToken();
                     createPayment('widget');
