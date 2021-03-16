@@ -26,7 +26,7 @@ class ControllerPaymentYoomoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '2.0.4';
+    private $moduleVersion = '2.0.6';
 
     /**
      * @var integer

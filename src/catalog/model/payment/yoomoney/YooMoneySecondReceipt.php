@@ -1,6 +1,15 @@
 <?php
 
 use YooKassa\Client;
+use YooKassa\Common\Exceptions\ApiException;
+use YooKassa\Common\Exceptions\BadApiRequestException;
+use YooKassa\Common\Exceptions\ExtensionNotFoundException;
+use YooKassa\Common\Exceptions\ForbiddenException;
+use YooKassa\Common\Exceptions\InternalServerError;
+use YooKassa\Common\Exceptions\NotFoundException;
+use YooKassa\Common\Exceptions\ResponseProcessingException;
+use YooKassa\Common\Exceptions\TooManyRequestsException;
+use YooKassa\Common\Exceptions\UnauthorizedException;
 use YooKassa\Model\PaymentInterface;
 use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\ReceiptCustomer;
@@ -8,7 +17,9 @@ use YooKassa\Model\ReceiptItem;
 use YooKassa\Model\ReceiptType;
 use YooKassa\Model\Settlement;
 use YooKassa\Request\Receipts\CreatePostReceiptRequest;
+use YooKassa\Request\Receipts\PaymentReceiptResponse;
 use YooKassa\Request\Receipts\ReceiptResponseInterface;
+use YooKassa\Request\Receipts\ReceiptResponseItem;
 use YooKassa\Request\Receipts\ReceiptResponseItemInterface;
 
 /**
@@ -54,7 +65,7 @@ class YooMoneySecondReceipt
             try{
                 $paymentInfo = $this->model->getPaymentByOrderId($paymentMethod, $orderInfo['order_id']);
             } catch (Exception $e) {
-                $this->model->log("error", "Get payment info error:" . $e->getMessage());
+                $this->model->log("error", "Get payment info error: " . $e->getMessage());
                 return;
             }
 
@@ -65,7 +76,7 @@ class YooMoneySecondReceipt
             try {
                 $lastReceipt = $this->getLastReceipt($client, $paymentInfo->getId());
             } catch (Exception $e) {
-                $this->model->log("error", "Get last receipt error:" . $e->getMessage());
+                $this->model->log("error", "Get last receipt error: " . $e->getMessage());
                 return;
             }
 
@@ -301,25 +312,100 @@ class YooMoneySecondReceipt
 
     /**
      * @param Client $client
-     * @param $paymentId
-     *
+     * @param string $paymentId
      * @return mixed|ReceiptResponseInterface
-     * @throws YooKassa\Common\Exceptions\ApiException
-     * @throws YooKassa\Common\Exceptions\BadApiRequestException
-     * @throws YooKassa\Common\Exceptions\ForbiddenException
-     * @throws YooKassa\Common\Exceptions\InternalServerError
-     * @throws YooKassa\Common\Exceptions\NotFoundException
-     * @throws YooKassa\Common\Exceptions\ResponseProcessingException
-     * @throws YooKassa\Common\Exceptions\TooManyRequestsException
-     * @throws YooKassa\Common\Exceptions\UnauthorizedException
-     * @throws YooKassa\Common\Exceptions\ExtensionNotFoundException
+     *
+     * @throws ApiException
+     * @throws BadApiRequestException
+     * @throws ExtensionNotFoundException
+     * @throws ForbiddenException
+     * @throws InternalServerError
+     * @throws NotFoundException
+     * @throws ResponseProcessingException
+     * @throws TooManyRequestsException
+     * @throws UnauthorizedException
+     * @throws Exception
      */
     private function getLastReceipt($client, $paymentId)
     {
-        $receipts = $client->getReceipts(array(
-            'payment_id' => $paymentId,
-        ))->getItems();
+        $paymentReceipts = $client->getReceipts(array('payment_id' => $paymentId))->getItems();
+        $lastPaymentReceipt = array_shift($paymentReceipts);
 
-        return array_shift($receipts);
+        if ($lastPaymentReceipt) {
+            $refundReceipts = $this->getRefundReceipts($client, $paymentId);
+
+            if (count($refundReceipts)) {
+                return $this->createNewPaymentReceipt($lastPaymentReceipt, $refundReceipts);
+            } else {
+                return $lastPaymentReceipt;
+            }
+        }
+
+        return null;
     }
+
+    /**
+     * @param Client $client
+     * @param string $paymentId
+     * @return ReceiptResponseInterface[]
+     *
+     * @throws ApiException
+     * @throws BadApiRequestException
+     * @throws ExtensionNotFoundException
+     * @throws ForbiddenException
+     * @throws InternalServerError
+     * @throws NotFoundException
+     * @throws ResponseProcessingException
+     * @throws TooManyRequestsException
+     * @throws UnauthorizedException
+     */
+    private function getRefundReceipts($client, $paymentId)
+    {
+        $refundReceipts = array();
+        $refunds = $client->getRefunds(array('payment_id' => $paymentId))->getItems();
+        foreach ($refunds as $refund) {
+            $refundReceipts = array_merge(
+                $refundReceipts,
+                $client->getReceipts(array('refund_id' => $refund->getId()))->getItems()
+            );
+        }
+        return $refundReceipts;
+    }
+
+    /**
+     * @param ReceiptResponseInterface $lastPaymentReceipt
+     * @param ReceiptResponseInterface[] $refundReceipts
+     * @return PaymentReceiptResponse
+     *
+     * @throws Exception
+     */
+    private function createNewPaymentReceipt($lastPaymentReceipt, $refundReceipts)
+    {
+        $newReceiptItems = array();
+        foreach ($lastPaymentReceipt->getItems() as $paymentReceiptItem) {
+            $newReceiptItem = new ReceiptResponseItem($paymentReceiptItem->jsonSerialize());
+            $newQuantity = $newReceiptItem->getQuantity();
+            foreach ($refundReceipts as $refundReceipt) {
+                foreach ($refundReceipt->getItems() as $refundReceiptItem) {
+                    if ($paymentReceiptItem->getDescription() == $refundReceiptItem->getDescription() &&
+                        $paymentReceiptItem->getPrice()->getValue() == $refundReceiptItem->getPrice()->getValue()) {
+                        $newQuantity -= $refundReceiptItem->getQuantity();
+                    }
+                }
+            }
+            if ($newQuantity > 0) {
+                $newReceiptItem->setQuantity($newQuantity);
+                $newReceiptItems[] = $newReceiptItem->jsonSerialize();
+            }
+        }
+        /** @var PaymentReceiptResponse $lastPaymentReceipt */
+        return new PaymentReceiptResponse([
+            'id' => $lastPaymentReceipt->getId(),
+            'payment_id' => $lastPaymentReceipt->getPaymentId(),
+            'type' => $lastPaymentReceipt->getType(),
+            'status' => $lastPaymentReceipt->getStatus(),
+            'items' => $newReceiptItems,
+        ]);
+    }
+
 }
