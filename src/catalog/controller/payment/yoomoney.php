@@ -361,8 +361,8 @@ class ControllerPaymentYoomoney extends Controller
             } else {
                 $this->getModel()->log('info', 'callback: Prepare change order status');
                 $orderAmount = sprintf('%.2f', $this->currency->format($orderInfo['total'], 'RUB', '', false));
-                $this->getModel()->log('info', 'callback: Total order = ' . $orderAmount . ',  Total paid = ' . $callbackParams['amount'] . ';'.print_r($callbackParams, true));
-                if ($callbackParams['amount'] == $orderAmount) {
+                $this->getModel()->log('info', 'callback: Total order = ' . $orderAmount . ',  Total paid = ' . $callbackParams['amount'] . ',  Total withdraw = ' . $callbackParams['withdraw_amount'] . ';');
+                if ($callbackParams['withdraw_amount'] == $orderAmount) {
                     $this->getModel()->log('info', 'callback: Payment amount is valid.');
                     $sender = ($callbackParams['sender'] != '') ? "Номер кошелька ЮMoney: ".$callbackParams['sender']."." : '';
                     $orderInfo['order_status_id'] = $this->config->get('yoomoney_wallet_new_order_status');

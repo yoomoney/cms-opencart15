@@ -5,7 +5,7 @@ use YooKassa\Model\PaymentMethodType;
 class YooMoneyPaymentMethod
 {
     /** @const string */
-    const MODULE_VERSION = '2.0.6';
+    const MODULE_VERSION = '2.0.7';
 
     /** @const string */
     const CUSTOM_PAYMENT_METHOD_WIDGET = 'widget';
