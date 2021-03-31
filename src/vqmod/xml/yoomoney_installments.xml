@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <modification>
     <id>yoomoney_installments</id>
-    <version>1.4.x and above</version>
+    <version>2.0.8</version>
     <vqmver required="true">2.6.0</vqmver>
     <author>YooMoney</author>
 
@@ -20,14 +20,16 @@
                 if ($order_status['order_status_id'] !== $yoomoney_kassa_hold_order_status) {
                     continue;
                 }
-                $order = $this->model_sale_order->getOrder($result['order_id']);
-                if(!empty($order['payment_code']) && $order['payment_code'] == 'yoomoney') {
+                $orderInfo = $this->model_sale_order->getOrder($result['order_id']);
+                if(!empty($orderInfo['payment_code']) && $orderInfo['payment_code'] == 'yoomoney') {
                     $action[] = array(
                         'text' => $this->language->get('kassa_hold_capture_form_link'),
                         'href' => $this->url->link('payment/yoomoney/captureForm', 'token=' . $this->session->data['token'] . '&order_id=' . $result['order_id'] . $url, 'SSL')
                     );
+                    break;
                 }
             }
+            $this->language->load('sale/order');
             ]]></add>
         </operation>
     </file>
