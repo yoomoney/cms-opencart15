@@ -26,7 +26,7 @@ class ControllerPaymentYoomoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '2.0.8';
+    private $moduleVersion = '2.1.0';
 
     /**
      * @var integer
@@ -127,6 +127,7 @@ class ControllerPaymentYoomoney extends Controller
             if ($method instanceof YooMoneyPaymentKassa) {
                 $this->data['name_methods']       = $method->getPaymentMethods();
                 $this->data['kassa_taxes']        = $method->getTaxRates();
+                $this->data['kassa_tax_systems']  = $method->getTaxSystemCodes();
                 $this->data['b2bTaxRates']        = $method->getB2bTaxRatesList();
                 $this->data['paymentModeEnum']    = $method->getPaymentModeEnum();
                 $this->data['paymentSubjectEnum'] = $method->getPaymentSubjectEnum();

@@ -201,6 +201,7 @@ class YooMoneyPaymentKassa extends YooMoneyPaymentMethod
             'yoomoney_kassa_second_receipt_enable',
             'yoomoney_kassa_second_receipt_status',
             'yoomoney_kassa_receipt_tax_id',
+            'yoomoney_kassa_default_tax_system',
             'yoomoney_kassa_new_order_status',
             'yoomoney_kassa_debug_mode',
             'yoomoney_kassa_sort_order',
@@ -274,6 +275,21 @@ class YooMoneyPaymentKassa extends YooMoneyPaymentMethod
             4 => '20%',
             5 => $this->language->get('text_vat_10'),
             6 => $this->language->get('text_vat_20'),
+        );
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getTaxSystemCodes()
+    {
+        return array(
+            1 => $this->language->get('kassa_tax_system_1_label'),
+            2 => $this->language->get('kassa_tax_system_2_label'),
+            3 => $this->language->get('kassa_tax_system_3_label'),
+            4 => $this->language->get('kassa_tax_system_4_label'),
+            5 => $this->language->get('kassa_tax_system_5_label'),
+            6 => $this->language->get('kassa_tax_system_6_label'),
         );
     }
 
