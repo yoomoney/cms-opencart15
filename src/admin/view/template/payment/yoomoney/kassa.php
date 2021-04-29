@@ -352,7 +352,7 @@ use YooKassa\Model\PaymentMethodType;
                                 <?php endif; ?>
                             <?php endforeach; ?>
                         </select>
-                        <p><?php echo $lang->get('kassa_default_tax_rate_description'); ?></p>
+                        <p class="help-block"><?php echo $lang->get('kassa_default_tax_rate_description'); ?></p>
                     </div>
                     <div class="col-sm-8 col-sm-offset-3">
                         <p style="padding-top: 15px;"><b><?php echo $lang->get('kassa_tax_rate_description'); ?></b></p>
@@ -382,6 +382,20 @@ use YooKassa\Model\PaymentMethodType;
                             <?php endforeach; ?>
                             </tbody>
                         </table>
+                    </div>
+                    <div class="col-sm-8 col-sm-offset-3">
+                        <p style="padding-top: 8px;"><b><?php echo $lang->get('kassa_default_tax_system_label'); ?></b></p>
+                        <select name="yoomoney_kassa_default_tax_system" class="form-control" data-toggle="tooltip" data-placement="left" title="">
+                            <option value="">-</option>
+                            <?php foreach ($kassa_tax_systems as $tax_id => $tax_name) : ?>
+                                <?php if (isset($yoomoney_kassa_default_tax_system) && $tax_id == $yoomoney_kassa_default_tax_system) : ?>
+                                    <option value="<?php echo $tax_id; ?>" selected="selected"><?php echo $tax_name; ?></option>
+                                <?php else : ?>
+                                    <option value="<?php echo $tax_id; ?>"><?php echo $tax_name; ?></option>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="help-block"><?php echo $lang->get('kassa_default_tax_system_description'); ?></p>
                     </div>
                     <div class="col-sm-8 col-sm-offset-3">
                         <p style="padding-top: 8px;"><b><?php echo $lang->get('kassa_default_payment_mode_label'); ?></b></p>

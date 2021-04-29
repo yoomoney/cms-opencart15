@@ -442,6 +442,7 @@ class ModelPaymentYoomoney extends Model
             $builder->setReceiptPhone($orderInfo['telephone']);
         }
         $taxRates              = $this->config->get('yoomoney_kassa_receipt_tax_id');
+        $defaultTaxSystemCode  = $this->config->get('yoomoney_kassa_default_tax_system');
         $defaultPaymentSubject = $this->config->get('yoomoney_kassa_default_payment_subject');
         $defaultPaymentMode    = $this->config->get('yoomoney_kassa_default_payment_mode');
         $orderProducts         = $this->model_account_order->getOrderProducts($orderInfo['order_id']);
@@ -489,6 +490,10 @@ class ModelPaymentYoomoney extends Model
                         $defaultPaymentSubject);
                 }
             }
+        }
+
+        if (!empty($defaultTaxSystemCode)) {
+            $builder->setTaxSystemCode($defaultTaxSystemCode);
         }
 
         return $builder;
