@@ -10,13 +10,14 @@ $_['text_need_update'] = "Your module version is outdated. You can <a target='_b
 
 $_['yoomoney_license'] = '<p>By using this program in any way, you fully and unconditionally accept the terms of the license agreement as posted at <a href="https://yoomoney.ru/doc.xml?id=527132">https://yoomoney.ru/doc.xml?id=527132</a>(hereinafter referred to "license agreement"). If you do not accept any part of the terms of the license agreement, you are forbidden to use the program for any purpose.</p>';
 
-$_['error_permission']                  = 'You don\'t have the permission to use this module!';
-$_['error_empty_payment']               = 'Please select at least one option from the list';
-$_['error_yoomoney_kassa_shop_id']            = 'Specify shopId';
-$_['error_yoomoney_kassa_password']           = 'Specify secret key';
-$_['error_invalid_shop_password']       = 'Invalid format for the secret key';
-$_['error_invalid_shop_id_or_password'] = 'Such secret key does not exist. If you are sure you copied the key correctly, this means it does not work for some reason. Issue and activate the key again—under your Merchant Profile';
-$_['error_install_widget']              = 'Чтобы покупатели могли заплатить вам через Apple Pay, <a href="https://yookassa.ru/docs/merchant.ru.yandex.kassa">скачайте файл apple-developer-merchantid-domain-association</a> и добавьте его в папку ./well-known на вашем сайте. Если не знаете, как это сделать, обратитесь к администратору сайта или в поддержку хостинга. Не забудьте также подключить оплату через Apple Pay <a href="https://yookassa.ru/my/payment-methods/settings#applePay">в личном кабинете ЮKassa</a>. <a href="https://yookassa.ru/developers/payment-forms/widget#apple-pay-configuration">Почитать о подключении Apple Pay в документации ЮKassa</a>';
+$_['error_permission']                      = 'You don\'t have the permission to use this module!';
+$_['error_empty_payment']                   = 'Please select at least one option from the list';
+$_['error_payment_not_found']               = 'Payment not found!';
+$_['error_yoomoney_kassa_shop_id']          = 'Specify shopId';
+$_['error_yoomoney_kassa_password']         = 'Specify secret key';
+$_['error_invalid_shop_password']           = 'Invalid format for the secret key';
+$_['error_invalid_shop_id_or_password']     = 'Such secret key does not exist. If you are sure you copied the key correctly, this means it does not work for some reason. Issue and activate the key again—under your Merchant Profile';
+$_['error_install_widget']                  = 'Чтобы покупатели могли заплатить вам через Apple Pay, <a href="https://yookassa.ru/docs/merchant.ru.yandex.kassa">скачайте файл apple-developer-merchantid-domain-association</a> и добавьте его в папку ./well-known на вашем сайте. Если не знаете, как это сделать, обратитесь к администратору сайта или в поддержку хостинга. Не забудьте также подключить оплату через Apple Pay <a href="https://yookassa.ru/my/payment-methods/settings#applePay">в личном кабинете ЮKassa</a>. <a href="https://yookassa.ru/developers/payment-forms/widget#apple-pay-configuration">Почитать о подключении Apple Pay в документации ЮKassa</a>';
 
 $_['module_settings_header']                = "Settings";
 $_['module_license']                        = "By using the module, you accept its <a href='https://yoomoney.ru/doc.xml?id=527132' target='_blank'>terms of use</a>.";
@@ -141,6 +142,10 @@ $_['updater_log_text_load_failed']            = 'Unable to load the archive with
 $_['order_captured_text']       = 'Payment for order No. %s confirmed';
 $_['payments_list_title']       = 'List of payments';
 $_['payments_list_breadcrumbs'] = 'List of payment methods available via the YooMoney module';
+
+$_['text_repay'] = 'Pay';
+$_['text_order'] = 'Order';
+$_['text_comment'] = 'Comment';
 
 $_['text_method_yoomoney'] = 'YooMoney';
 $_['text_method_bank_card']    = 'Debit or credit cards—Visa, Mastercard, Maestro, MIR';
