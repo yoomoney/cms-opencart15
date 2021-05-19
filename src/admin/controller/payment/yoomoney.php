@@ -26,7 +26,7 @@ class ControllerPaymentYoomoney extends Controller
     /**
      * @var string
      */
-    private $moduleVersion = '2.1.0';
+    private $moduleVersion = '2.1.1';
 
     /**
      * @var integer
@@ -451,6 +451,10 @@ class ControllerPaymentYoomoney extends Controller
             $payment = $this->getModel()->getPaymentByOrderId($kassa, $orderId);
         } catch (Exception $exception) {
             $this->getModel()->log('error', $exception->getMessage());
+        }
+
+        if (!$payment) {
+            $this->getModel()->log('error', $this->language->get('payment_not_found'));
             $this->children = array(
                 'common/header',
                 'common/footer',
@@ -466,7 +470,7 @@ class ControllerPaymentYoomoney extends Controller
         }
 
         $message = '';
-        if ($payment['status'] === \YooKassa\Model\PaymentStatus::WAITING_FOR_CAPTURE
+        if ($payment->getStatus() === \YooKassa\Model\PaymentStatus::WAITING_FOR_CAPTURE
             && isset($this->request->post['action'])
         ) {
             $action = $this->request->post['action'];
@@ -534,6 +538,11 @@ class ControllerPaymentYoomoney extends Controller
         $this->data['cancel_link']            = $this->url->link(
             'payment/yoomoney/captureForm',
             'token='.$this->session->data['token'].'&order_id='.$orderId.'&cancel_payment=yes',
+            'SSL'
+        );
+        $this->data['product_link']            = $this->url->link(
+            'catalog/product/update',
+            'token='.$this->session->data['token'].'&product_id=',
             'SSL'
         );
         $this->data['capture_form_route']     = 'payment/yoomoney/captureForm';

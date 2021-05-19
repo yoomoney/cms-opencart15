@@ -50,7 +50,7 @@
                                 <?php foreach ($products as $product) { ?>
                                 <tr>
                                     <td class="left">
-                                        <a href="<?= $product['href']; ?>"><?= $product['name']; ?></a>
+                                        <a href="<?= $product_link . $product['product_id']; ?>"><?= $product['name']; ?></a>
                                     </td>
                                     <td class="left"><?= $product['model']; ?></td>
                                     <td class="right">
