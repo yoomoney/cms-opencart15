@@ -1,10 +1,9 @@
 <?php
 
-use YooKassa\Client;
 use YooKassa\Model\Confirmation\AbstractConfirmation;
 use YooKassa\Model\ConfirmationType;
-use YooKassa\Model\Notification\NotificationSucceeded;
-use YooKassa\Model\Notification\NotificationWaitingForCapture;
+use YooKassa\Model\Notification\NotificationFactory;
+use YooKassa\Model\Notification\NotificationRefundSucceeded;
 use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentMethodType;
 use YooKassa\Model\PaymentStatus;
@@ -260,27 +259,38 @@ class ControllerPaymentYoomoney extends Controller
         }
 
         try {
-            $notification = ($json['event'] === NotificationEventType::PAYMENT_SUCCEEDED)
-                ? new NotificationSucceeded($json)
-                : new NotificationWaitingForCapture($json);
+            $factory = new NotificationFactory();
+            $notification = $factory->factory($json);
         } catch (\Exception $e) {
             $this->getModel()->log('error', 'Invalid notification object - '.$e->getMessage());
             header('HTTP/1.1 400 Invalid object in body');
-
-            return;
-        }
-
-        $orderId = $this->getModel()->getOrderIdByPayment($notification->getObject());
-        if ($orderId <= 0) {
-            $this->getModel()->log('warning', 'Order not exists in capture notification'.$orderId);
-            header('HTTP/1.1 404 Order not exists');
             exit();
         }
+
+        $paymentId = $notification instanceof NotificationRefundSucceeded
+                   ? $notification->getObject()->getPaymentId()
+                   : $notification->getObject()->getId();
+
+        $orderId = $this->getModel()->getOrderIdByPayment($paymentId);
+        if ($orderId <= 0) {
+            $this->getModel()->log('error', 'Order not exists for payment ' . $paymentId);
+            exit();
+        }
+
+        if ($notification->getEvent() === NotificationEventType::REFUND_SUCCEEDED) {
+            $this->getModel()->log('info', 'Refund success for order #'.$orderId);
+            exit();
+        }
+
+        if ($notification->getEvent() === NotificationEventType::PAYMENT_CANCELED) {
+            $this->getModel()->log('info', 'Payment for order #'.$orderId.' cancelled');
+            exit();
+        }
+
         $this->load->model('checkout/order');
         $orderInfo = $this->model_checkout_order->getOrder($orderId);
         if (empty($orderInfo)) {
-            $this->getModel()->log('warning', 'Empty order#'.$orderId.' in notification');
-            header('HTTP/1.1 405 Invalid order payment method');
+            $this->getModel()->log('warning', 'Empty order #'.$orderId.' in notification');
             exit();
         } elseif ($orderInfo['order_status_id'] <= 0) {
             $this->getModel()->confirmOrder($paymentMethod, $orderId);
@@ -295,9 +305,8 @@ class ControllerPaymentYoomoney extends Controller
             $payment = $client->getPaymentInfo($notification->getObject()->getId());
         } catch (Exception $e) {
             $this->getModel()->log('error',
-                'Payment '.$notification->getObject()->getId().' not fetched from API in capture method');
-
-            return false;
+                'Payment '.$notification->getObject()->getId().' not fetched from API in capture method. Error: ' . $e->getMessage());
+            exit();
         }
 
         if ($notification->getEvent() === NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE
@@ -320,6 +329,7 @@ class ControllerPaymentYoomoney extends Controller
                 exit();
             }
         }
+
         if ($notification->getEvent() === NotificationEventType::PAYMENT_SUCCEEDED) {
             if ($payment->getStatus() === PaymentStatus::SUCCEEDED) {
                 $this->getModel()->hookOrderStatusChange($orderId, $paymentMethod->getOrderStatusId());
@@ -328,7 +338,7 @@ class ControllerPaymentYoomoney extends Controller
                 exit();
             }
         }
-        header('HTTP/1.1 500 Internal server error');
+
         exit();
     }
 
