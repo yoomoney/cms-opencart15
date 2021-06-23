@@ -295,14 +295,14 @@ class ModelPaymentYoomoney extends Model
     }
 
     /**
-     * @param PaymentInterface $payment
+     * @param string $paymentId
      *
      * @return int
      */
-    public function getOrderIdByPayment($payment)
+    public function getOrderIdByPayment($paymentId)
     {
         $sql     = 'SELECT `order_id` FROM `'.DB_PREFIX.'yoomoney_payment` WHERE `payment_id` = \''
-                   .$this->db->escape($payment->getId()).'\'';
+                   .$this->db->escape($paymentId).'\'';
         $dataSet = $this->db->query($sql);
         if (empty($dataSet->num_rows)) {
             return -1;
