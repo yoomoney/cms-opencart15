@@ -27,16 +27,18 @@ class ModelPaymentYoomoney extends Model
     public function getMethod($address, $total)
     {
         $this->language->load('payment/yoomoney');
+        $zoneWallet = (int)$this->config->get('yoomoney_wallet_id_zone');
+        $zoneKassa = (int)$this->config->get('yoomoney_kassa_id_zone');
 
         $query = $this->db->query(
-            "SELECT * FROM `".DB_PREFIX."zone_to_geo_zone` WHERE `geo_zone_id` = '"
-            .(int)$this->config->get('yoomoney_idZone')."' AND `country_id` = '".(int)$address['country_id']
+            "SELECT * FROM `".DB_PREFIX."zone_to_geo_zone` WHERE (`geo_zone_id` = '".$zoneWallet."' OR `geo_zone_id` = '".$zoneKassa."')"
+            ." AND `country_id` = '".(int)$address['country_id']
             ."' AND (`zone_id` = '".(int)$address['zone_id']."' OR `zone_id` = '0')"
         );
 
         if ($total == 0) {
             $status = false;
-        } elseif (!$this->config->get('yoomoney_idZone')) {
+        } elseif (!$zoneWallet && !$zoneKassa) {
             $status = true;
         } elseif ($query->num_rows) {
             $status = true;
