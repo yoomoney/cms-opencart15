@@ -8,7 +8,8 @@ $_['text_method_bank_card'] = 'Debit or credit cards—Visa, Mastercard, Maestro
 $_['text_method_cash'] = 'Cash';
 $_['text_method_mobile'] = 'Direct carrier billing—Beeline, MegaFon, MTS, Tele2';
 $_['text_method_webmoney'] = 'Webmoney';
-$_['text_method_alfabank'] = 'Alfa-Click';$_['text_method_sberbank'] = 'Sberbank Online';
+$_['text_method_alfabank'] = 'Alfa-Click';
+$_['text_method_sberbank'] = 'SberPay';
 $_['text_method_ma'] = 'MasterPass';
 $_['text_method_pb'] = 'Payment via Promsvyazbank';
 $_['text_method_qiwi'] = 'QIWI Wallet';
