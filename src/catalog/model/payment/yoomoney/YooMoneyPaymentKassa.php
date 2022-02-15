@@ -238,6 +238,7 @@ class YooMoneyPaymentKassa extends YooMoneyPaymentMethod
         $disabledMethods = array(
             PaymentMethodType::B2B_SBERBANK,
             PaymentMethodType::WECHAT,
+            PaymentMethodType::WEBMONEY,
         );
 
         $result = array(
